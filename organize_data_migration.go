@@ -98,8 +98,9 @@ type Node struct {
 }
 
 type Platform struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
+    ID      int    `json:"id"`
+    Name    string `json:"name"`
+    Comment string `json:"comment,omitempty"`
 }
 
 type Protocol struct {
@@ -173,17 +174,23 @@ func (sa *SimpleAsset) HandleAccounts(w *Worker) []Account {
     var suFromAccounts []Account
     w.jmsClient.org = w.migrateFromOrg
     for _, account := range w.jmsClient.GetAssetAccount(*sa) {
-        accountWithSecret, err := w.jmsClient.GetAccountSecret(account)
-        if err != nil {
-            logger.Errorf("[迁移资产]获取账号密码失败: %v", err)
-            os.Exit(1)
-        }
-        account.ID = ""
-        account.Secret = accountWithSecret.Secret
-        if account.SuFrom == nil {
-            newAccounts = append(newAccounts, account)
+        if account.SourceId == "" {
+            accountWithSecret, err := w.jmsClient.GetAccountSecret(account)
+            if err != nil {
+                logger.Errorf("[迁移资产]获取账号密码失败: %v", err)
+                os.Exit(1)
+            }
+            account.Secret = accountWithSecret.Secret
+            if account.SuFrom == nil {
+                account.ID = ""
+                newAccounts = append(newAccounts, account)
+            } else {
+                suFromAccounts = append(suFromAccounts, account)
+            }
         } else {
-            suFromAccounts = append(suFromAccounts, account)
+            account.ID = ""
+            account.Template = w.migrateFromAccountTemplateMapping[account.SourceId]
+            newAccounts = append(newAccounts, account)
         }
     }
     sa.Accounts = newAccounts
@@ -263,6 +270,10 @@ type SecretType struct {
     Value string `json:"value"`
 }
 
+type SecretStrategy struct {
+    Value string `json:"value"`
+}
+
 type SuFrom struct {
     ID       string `json:"id"`
     Username string `json:"username,omitempty"`
@@ -278,7 +289,22 @@ type Account struct {
     SuFrom     *SuFrom     `json:"su_from,omitempty"`
     Secret     string      `json:"secret"`
     Asset      SimpleAsset `json:"asset"`
-    SourceId   string      `json:"source_id"`
+    SourceId   string      `json:"source_id,omitempty"`
+    Template   string      `json:"template,omitempty"`
+    Comment    string      `json:"comment,omitempty"`
+}
+
+type AccountTemplate struct {
+    ID             string         `json:"id,omitempty"`
+    Name           string         `json:"name"`
+    Username       string         `json:"username"`
+    AutoPush       bool           `json:"auto_push"`
+    Privileged     bool           `json:"privileged"`
+    SecretStrategy SecretStrategy `json:"secret_strategy"`
+    SecretType     SecretType     `json:"secret_type"`
+    Comment        string         `json:"comment,omitempty"`
+    Secret         string         `json:"secret"`
+    SuFrom         *SuFrom        `json:"su_from,omitempty"`
 }
 
 type Perm struct {
@@ -340,7 +366,8 @@ func NewJMSClient(config *JMSConfig) *JMSClient {
 }
 
 type Other struct {
-    PageLimit int
+    PageLimit  int
+    MFACookies []*http.Cookie
 }
 
 type JMSClient struct {
@@ -634,6 +661,9 @@ func (c *JMSClient) GenOTP() (string, error) {
 }
 
 func (c *JMSClient) GetMFACookies() ([]*http.Cookie, error) {
+    if c.other.MFACookies != nil {
+        return c.other.MFACookies, nil
+    }
     url := "/api/v1/authentication/confirm/"
     otp, err := c.GenOTP()
     if err != nil {
@@ -657,7 +687,8 @@ func (c *JMSClient) GetMFACookies() ([]*http.Cookie, error) {
     if resp.StatusCode != http.StatusOK {
         return nil, fmt.Errorf("failed to get MFA cookies: %s", resp.Status)
     }
-    return resp.Cookies(), nil
+    c.other.MFACookies = resp.Cookies()
+    return c.other.MFACookies, nil
 }
 
 func (c *JMSClient) GetAccountSecret(account Account) (*Account, error) {
@@ -697,6 +728,48 @@ func (c *JMSClient) GetDomains() []Domain {
         os.Exit(1)
     }
     return domains
+}
+
+func (c *JMSClient) GetAccountTemplates() []AccountTemplate {
+    url := "/api/v1/accounts/account-templates/"
+    result, _ := c.GetWithPage(url)
+    var accountTemplates []AccountTemplate
+    err := json.Unmarshal(result, &accountTemplates)
+    if err != nil {
+        logger.Errorf("获取账号模板失败: %v", err)
+        os.Exit(1)
+    }
+    return accountTemplates
+}
+
+func (c *JMSClient) GetAccountTemplateSecret(at AccountTemplate) (*AccountTemplate, error) {
+    url := fmt.Sprintf("/api/v1/accounts/account-template-secrets/%s/", at.ID)
+    var newAccountTemplate AccountTemplate
+    cookies, _ := c.GetMFACookies()
+    result, err := c.Get(url, cookies)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newAccountTemplate)
+    if err != nil {
+        return nil, err
+    }
+    return &newAccountTemplate, nil
+}
+
+func (c *JMSClient) CreateAccountTemplate(at AccountTemplate) (*AccountTemplate, error) {
+    url := "/api/v1/accounts/account-templates/"
+    var newAccountTemplate AccountTemplate
+    at.ID = uuid.New().String()
+    result, err := c.Post(url, at)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newAccountTemplate)
+    if err != nil {
+        return nil, err
+    }
+    return &newAccountTemplate, nil
 }
 
 func (c *JMSClient) CreateUserGroup(userGroup UserGroup) (*UserGroup, error) {
@@ -828,13 +901,14 @@ type Worker struct {
     migrateFromOrg Organization
     migrateToOrg   Organization
     
-    migrateFromUserMapping      map[string]string
-    migrateFromUserGroupMapping map[string]string
-    migrateFromAssetMapping     map[string]string
-    migrateFromNodeMapping      map[string]string
-    migrateFromPermMapping      map[string]string
-    migrateFromDomainMapping    map[string]string
-    migrateDomainList           []Domain
+    migrateFromUserMapping            map[string]string
+    migrateFromUserGroupMapping       map[string]string
+    migrateFromAssetMapping           map[string]string
+    migrateFromNodeMapping            map[string]string
+    migrateFromPermMapping            map[string]string
+    migrateFromDomainMapping          map[string]string
+    migrateFromAccountTemplateMapping map[string]string
+    migrateDomainList                 []Domain
 }
 
 func (w *Worker) ParseOption() {
@@ -958,6 +1032,57 @@ func (w *Worker) MigrateUser() {
         logger.Infof("[迁移用户]成功邀请用户(%s)到组织(%s)", user.Name, w.jmsClient.org.Name)
     }
     logger.Infof("[迁移用户]------ 结束 ------\n\n")
+}
+
+func (w *Worker) MigrateAccountTemplate() {
+    logger.Infoln("[迁移账号模板]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, at := range w.jmsClient.GetAccountTemplates() {
+        localResourceSet.Add(at.Name, at.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    var suATs []AccountTemplate
+    for _, fromAT := range w.jmsClient.GetAccountTemplates() {
+        if toATId, exists := localResourceSet.Exist(fromAT.Name); exists {
+            w.migrateFromAccountTemplateMapping[fromAT.ID] = toATId
+            logger.Warnf("[迁移账号模板]模板(%s)已经存在，跳过", fromAT.Name)
+            continue
+        }
+        w.jmsClient.org = w.migrateFromOrg
+        withSecretAT, err := w.jmsClient.GetAccountTemplateSecret(fromAT)
+        if err != nil {
+            logger.Errorf("[迁移账号模板]获取账号密码失败: %v", err)
+            os.Exit(1)
+        }
+        fromAT.Secret = withSecretAT.Secret
+        
+        if fromAT.SuFrom != nil {
+            suATs = append(suATs, fromAT)
+            continue
+        }
+        w.jmsClient.org = w.migrateToOrg
+        newAT, err := w.jmsClient.CreateAccountTemplate(fromAT)
+        if err != nil {
+            logger.Errorf("[迁移账号模板]迁移模板失败: %v", err)
+            os.Exit(1)
+        }
+        logger.Infof("[迁移账号模板]迁移模板(%s)到组织(%s)成功\n", fromAT.Name, w.migrateToOrg.Name)
+        w.migrateFromAccountTemplateMapping[fromAT.ID] = newAT.ID
+    }
+    
+    w.jmsClient.org = w.migrateToOrg
+    for _, at := range suATs {
+        at.SuFrom.ID = w.migrateFromAccountTemplateMapping[at.SuFrom.ID]
+        newAT, err := w.jmsClient.CreateAccountTemplate(at)
+        if err != nil {
+            logger.Errorf("[迁移账号模板]迁移模板失败: %v", err)
+            os.Exit(1)
+        }
+        logger.Infof("[迁移账号模板]迁移模板(%s)到组织(%s)成功\n", at.Name, w.migrateToOrg.Name)
+        w.migrateFromAccountTemplateMapping[at.ID] = newAT.ID
+    }
+    logger.Info("[迁移账号模板]------ 结束 ------\n\n")
 }
 
 func (w *Worker) MigrateNode() {
@@ -1254,10 +1379,37 @@ func (w *Worker) DeleteNodes() {
 func (w *Worker) DeleteDomains() {
     domainCount := len(w.migrateFromDomainMapping)
     logger.Infof("[清理原组织网域(%v个)]------ 开始 ------\n", domainCount)
+    var deleteIDs []string
+    url := "/api/v1/assets/domains/"
     for domainID, _ := range w.migrateFromDomainMapping {
-        _ = w.jmsClient.Delete(fmt.Sprintf("/api/v1/assets/domains/%s/", domainID))
+        deleteIDs = append(deleteIDs, domainID)
+        if len(deleteIDs) == w.options.PageLimit {
+            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
+            deleteIDs = []string{}
+        }
     }
-    logger.Info("[清理原组织资产节点]------ 结束 ------\n\n")
+    if len(deleteIDs) > 0 {
+        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
+    }
+    logger.Info("[清理原组织网域]------ 结束 ------\n\n")
+}
+
+func (w *Worker) DeleteAccountTemplates() {
+    accountTemplateCount := len(w.migrateFromAccountTemplateMapping)
+    logger.Infof("[清理原组织账号模板(%v个)]------ 开始 ------\n", accountTemplateCount)
+    var deleteIDs []string
+    url := "/api/v1/accounts/account-templates/"
+    for accountTemplateID, _ := range w.migrateFromAccountTemplateMapping {
+        deleteIDs = append(deleteIDs, accountTemplateID)
+        if len(deleteIDs) == w.options.PageLimit {
+            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
+            deleteIDs = []string{}
+        }
+    }
+    if len(deleteIDs) > 0 {
+        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
+    }
+    logger.Info("[清理原组织账号模板]------ 结束 ------\n\n")
 }
 
 func (w *Worker) DeletePerms() {
@@ -1296,6 +1448,7 @@ func (w *Worker) ClearMigrateOrg() {
         w.RemoveUsers()
         w.DeleteUserGroups()
         w.DeleteAssets()
+        w.DeleteAccountTemplates()
         w.DeleteDomains()
         w.DeleteNodes()
         w.DeletePerms()
@@ -1309,6 +1462,7 @@ func (w *Worker) Do() {
     w.Prepare()
     w.MigrateUserGroup()
     w.MigrateUser()
+    w.MigrateAccountTemplate()
     w.MigrateNode()
     w.MigrateDomain()
     w.MigrateAsset()
@@ -1319,12 +1473,13 @@ func (w *Worker) Do() {
 
 func main() {
     worker := Worker{
-        migrateFromNodeMapping:      make(map[string]string),
-        migrateFromAssetMapping:     make(map[string]string),
-        migrateFromUserMapping:      make(map[string]string),
-        migrateFromUserGroupMapping: make(map[string]string),
-        migrateFromPermMapping:      make(map[string]string),
-        migrateFromDomainMapping:    make(map[string]string),
+        migrateFromNodeMapping:            make(map[string]string),
+        migrateFromAssetMapping:           make(map[string]string),
+        migrateFromUserMapping:            make(map[string]string),
+        migrateFromUserGroupMapping:       make(map[string]string),
+        migrateFromPermMapping:            make(map[string]string),
+        migrateFromDomainMapping:          make(map[string]string),
+        migrateFromAccountTemplateMapping: make(map[string]string),
     }
     worker.Do()
 }

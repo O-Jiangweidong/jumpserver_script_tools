@@ -135,7 +135,7 @@ func (sa *SimpleAsset) CopyAsset(category string, w *Worker) (*SimpleAsset, erro
     var asset *SimpleAsset
     var err error
     if category == "hosts" {
-        sa.ID = fmt.Sprintf("%s-%s", sa.ID[:18], w.migrateToOrg.ID[18:])
+        sa.ID = fmt.Sprintf("%s-%s", sa.ID[:18], w.migrateToOrg.ID[:18])
     } else {
         sa.ID = uuid.New().String()
     }

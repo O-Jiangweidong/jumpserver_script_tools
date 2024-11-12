@@ -71,6 +71,12 @@ type JMSConfig struct {
     Other     Other
 }
 
+type SimpleItem struct {
+    ID      string `json:"id"`
+    Name    string `json:"name"`
+    Comment string `json:"comment,omitempty"`
+}
+
 type Organization struct {
     ID   string `json:"id"`
     Name string `json:"name"`
@@ -262,8 +268,8 @@ type Gateway struct {
 type Domain struct {
     ID       string    `json:"id"`
     Name     string    `json:"name"`
-    Gateways []Gateway `json:"gateways,omitempty"`
     Comment  string    `json:"comment,omitempty"`
+    Gateways []Gateway `json:"gateways,omitempty"`
 }
 
 type ValueType struct {
@@ -277,28 +283,28 @@ type SuFrom struct {
 
 type Account struct {
     ID         string      `json:"id,omitempty"`
+    Name       string      `json:"name"`
+    Comment    string      `json:"comment,omitempty"`
     Privileged bool        `json:"privileged"`
     SecretType ValueType   `json:"secret_type"`
     IsActive   bool        `json:"is_active"`
-    Name       string      `json:"name"`
     Username   string      `json:"username"`
     SuFrom     *SuFrom     `json:"su_from,omitempty"`
     Secret     string      `json:"secret"`
     Asset      SimpleAsset `json:"asset"`
     SourceId   string      `json:"source_id,omitempty"`
     Template   string      `json:"template,omitempty"`
-    Comment    string      `json:"comment,omitempty"`
 }
 
 type AccountTemplate struct {
     ID             string    `json:"id,omitempty"`
     Name           string    `json:"name"`
+    Comment        string    `json:"comment,omitempty"`
     Username       string    `json:"username"`
     AutoPush       bool      `json:"auto_push"`
     Privileged     bool      `json:"privileged"`
     SecretStrategy ValueType `json:"secret_strategy"`
     SecretType     ValueType `json:"secret_type"`
-    Comment        string    `json:"comment,omitempty"`
     Secret         string    `json:"secret"`
     SuFrom         *SuFrom   `json:"su_from,omitempty"`
 }
@@ -306,8 +312,8 @@ type AccountTemplate struct {
 type CloudAccount struct {
     ID       string    `json:"id"`
     Name     string    `json:"name"`
-    Provider ValueType `json:"provider"`
     Comment  string    `json:"comment,omitempty"`
+    Provider ValueType `json:"provider"`
 }
 
 type StrategyActionValue struct {
@@ -333,16 +339,17 @@ type StrategyRule struct {
 type CloudStrategy struct {
     ID           string           `json:"id"`
     Name         string           `json:"name"`
-    Priority     int              `json:"priority"`
     Comment      string           `json:"comment,omitempty"`
+    Priority     int              `json:"priority"`
     RuleRelation ValueType        `json:"rule_relation"`
     Actions      []StrategyAction `json:"strategy_actions"`
     Rules        []StrategyRule   `json:"strategy_rules"`
 }
 
 type CloudTask struct {
-    ID                    string          `json:"id,omitempty"`
+    ID                    string          `json:"id"`
     Name                  string          `json:"name"`
+    Comment               string          `json:"comment,omitempty"`
     Account               *CloudAccount   `json:"account,omitempty"`
     FullySynchronous      bool            `json:"fully_synchronous"`
     IsAlwaysUpdate        bool            `json:"is_always_update"`
@@ -354,7 +361,6 @@ type CloudTask struct {
     Regions               []string        `json:"regions"`
     IpNetworkSegmentGroup []string        `json:"ip_network_segment_group"`
     Strategies            []CloudStrategy `json:"strategy"`
-    Comment               string          `json:"comment,omitempty"`
 }
 
 func (v CloudTask) MarshalJSON() ([]byte, error) {
@@ -373,9 +379,45 @@ func (v CloudTask) MarshalJSON() ([]byte, error) {
     })
 }
 
+type CommandGroup struct {
+    ID         string    `json:"id"`
+    Name       string    `json:"name"`
+    Comment    string    `json:"comment,omitempty"`
+    Content    string    `json:"content"`
+    IgnoreCase bool      `json:"ignore_case"`
+    Type       ValueType `json:"type"`
+}
+
+type ResourceSelectAttr struct {
+    Match string `json:"match"`
+    Name  string `json:"name"`
+    Value string `json:"value"`
+}
+
+type ResourceSelect struct {
+    Type  string               `json:"type"`
+    Ids   []string             `json:"ids"`
+    Attrs []ResourceSelectAttr `json:"attrs,omitempty"`
+}
+
+type CommandACL struct {
+    ID            string         `json:"id"`
+    Name          string         `json:"name"`
+    Comment       string         `json:"comment,omitempty"`
+    IsActive      bool           `json:"is_active"`
+    Priority      int            `json:"priority"`
+    Action        ValueType      `json:"action"`
+    CommandGroups []CommandGroup `json:"command_groups"`
+    Accounts      []string       `json:"accounts"`
+    Reviewers     []User         `json:"reviewers"`
+    Users         ResourceSelect `json:"users"`
+    Assets        ResourceSelect `json:"assets"`
+}
+
 type Perm struct {
     ID          string        `json:"id"`
     Name        string        `json:"name"`
+    Comment     string        `json:"comment,omitempty"`
     Users       []User        `json:"users,omitempty"`
     UserGroups  []UserGroup   `json:"user_groups,omitempty"`
     Assets      []SimpleAsset `json:"assets,omitempty"`
@@ -386,7 +428,6 @@ type Perm struct {
     Accounts    []string      `json:"accounts,omitempty"`
     Protocols   []string      `json:"protocols,omitempty"`
     Actions     []Action      `json:"actions"`
-    Comment     string        `json:"comment"`
 }
 
 func containsArray(strNums []string, item string) bool {
@@ -784,6 +825,30 @@ func (c *JMSClient) GetPerms() []Perm {
     return perms
 }
 
+func (c *JMSClient) GetCommandGroups() []CommandGroup {
+    url := "/api/v1/acls/command-groups/"
+    result, _ := c.GetWithPage(url)
+    var cmdGroups []CommandGroup
+    err := json.Unmarshal(result, &cmdGroups)
+    if err != nil {
+        logger.Errorf("获取命令组失败: %v", err)
+        os.Exit(1)
+    }
+    return cmdGroups
+}
+
+func (c *JMSClient) GetCommandFilterACL() []CommandACL {
+    url := "/api/v1/acls/command-filter-acls/"
+    result, _ := c.GetWithPage(url)
+    var cmdACLs []CommandACL
+    err := json.Unmarshal(result, &cmdACLs)
+    if err != nil {
+        logger.Errorf("获取命令过滤失败: %v", err)
+        os.Exit(1)
+    }
+    return cmdACLs
+}
+
 func (c *JMSClient) GetDomains() []Domain {
     url := "/api/v1/assets/domains/"
     result, _ := c.GetWithPage(url)
@@ -934,6 +999,36 @@ func (c *JMSClient) CreateCloudTask(task CloudTask) (*CloudTask, error) {
     return &newTask, nil
 }
 
+func (c *JMSClient) CreateCommandGroup(cmdGroup CommandGroup) (*CommandGroup, error) {
+    url := "/api/v1/acls/command-groups/"
+    var newCmdGroup CommandGroup
+    cmdGroup.ID = uuid.New().String()
+    result, err := c.Post(url, cmdGroup)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newCmdGroup)
+    if err != nil {
+        return nil, err
+    }
+    return &newCmdGroup, nil
+}
+
+func (c *JMSClient) CreateCommandFilterACL(cmdACL CommandACL) (*SimpleItem, error) {
+    url := "/api/v1/acls/command-filter-acls/"
+    var newCmdACL SimpleItem
+    cmdACL.ID = uuid.New().String()
+    result, err := c.Post(url, cmdACL)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newCmdACL)
+    if err != nil {
+        return nil, err
+    }
+    return &newCmdACL, nil
+}
+
 func (c *JMSClient) CreateDomain(domain Domain) (*Domain, error) {
     // 先迁移主体，网关等迁移完资产后再更新网域迁移
     url := "/api/v1/assets/domains/"
@@ -1048,18 +1143,19 @@ type Worker struct {
     migrateFromOrg Organization
     migrateToOrg   Organization
     
-    migrateFromUserMapping                map[string]string
-    migrateFromUserGroupMapping           map[string]string
-    migrateFromAssetMapping               map[string]string
-    migrateFromNodeMapping                map[string]string
-    migrateFromPermMapping                map[string]string
-    migrateFromDomainMapping              map[string]string
-    migrateFromAccountTemplateMapping     map[string]string
-    migrateFromCloudAccountMapping        map[string]string
-    migrateFromCloudStrategyMapping       map[string]string
-    migrateFromCloudStrategyActionMapping map[string]string
-    migrateFromCloudTaskMapping           map[string]string
-    migrateDomainList                     []Domain
+    migrateFromUserMapping             map[string]string
+    migrateFromUserGroupMapping        map[string]string
+    migrateFromAssetMapping            map[string]string
+    migrateFromNodeMapping             map[string]string
+    migrateFromPermMapping             map[string]string
+    migrateFromDomainMapping           map[string]string
+    migrateFromAccountTemplateMapping  map[string]string
+    migrateFromCloudAccountMapping     map[string]string
+    migrateFromCloudStrategyMapping    map[string]string
+    migrateFromCloudTaskMapping        map[string]string
+    migrateFromCommandGroupMapping     map[string]string
+    migrateFromCommandFilterACLMapping map[string]string
+    migrateDomainList                  []Domain
 }
 
 func (w *Worker) ParseOption() {
@@ -1422,6 +1518,88 @@ func (w *Worker) MigratePerm() {
     logger.Info("[迁移授权]------ 结束 ------\n\n")
 }
 
+func (w *Worker) MigrateCommandGroup() {
+    logger.Infoln("[迁移命令组]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, cmdGroup := range w.jmsClient.GetCommandGroups() {
+        localResourceSet.Add(cmdGroup.Name, cmdGroup.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    for _, fromCmdGroup := range w.jmsClient.GetCommandGroups() {
+        if toCmdGroupId, exists := localResourceSet.Exist(fromCmdGroup.Name); exists {
+            w.migrateFromCommandGroupMapping[fromCmdGroup.ID] = toCmdGroupId
+            logger.Warnf("[迁移命令组](%s)已经存在，跳过", fromCmdGroup.Name)
+            continue
+        }
+        
+        w.jmsClient.org = w.migrateToOrg
+        newCmdGroup, err := w.jmsClient.CreateCommandGroup(fromCmdGroup)
+        if err != nil {
+            logger.Errorf("[迁移命令组]迁移失败: %v", err)
+            os.Exit(1)
+        }
+        w.migrateFromCommandGroupMapping[fromCmdGroup.ID] = newCmdGroup.ID
+        logger.Infof("[迁移命令组]迁移(%s)到组织(%s)成功\n", fromCmdGroup.Name, w.migrateToOrg.Name)
+    }
+    logger.Info("[迁移命令组]------ 结束 ------\n\n")
+}
+
+func (w *Worker) ConvertCmdFilterACLResource(cmdACL *CommandACL) {
+    var newUserIds, newAssetIds []string
+    var newGroups []CommandGroup
+    var newReviewers []User
+    for _, id := range cmdACL.Users.Ids {
+        newUserIds = append(newUserIds, w.migrateFromUserMapping[id])
+    }
+    for _, id := range cmdACL.Assets.Ids {
+        newAssetIds = append(newAssetIds, w.migrateFromAssetMapping[id])
+    }
+    for _, cmdGroup := range cmdACL.CommandGroups {
+        newGroups = append(newGroups, CommandGroup{ID: w.migrateFromCommandGroupMapping[cmdGroup.ID]})
+    }
+    for _, user := range cmdACL.Reviewers {
+        newReviewers = append(newReviewers, User{ID: w.migrateFromUserMapping[user.ID]})
+    }
+    cmdACL.Users.Ids = newUserIds
+    cmdACL.Assets.Ids = newAssetIds
+    cmdACL.CommandGroups = newGroups
+    cmdACL.Reviewers = newReviewers
+}
+
+func (w *Worker) MigrateCommandFilterACL() {
+    logger.Infoln("[迁移命令组过滤]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, cmdACL := range w.jmsClient.GetCommandFilterACL() {
+        localResourceSet.Add(cmdACL.Name, cmdACL.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    for _, fromCmdACL := range w.jmsClient.GetCommandFilterACL() {
+        if toCmdACLId, exists := localResourceSet.Exist(fromCmdACL.Name); exists {
+            w.migrateFromCommandFilterACLMapping[fromCmdACL.ID] = toCmdACLId
+            logger.Warnf("[迁移命令组过滤](%s)已经存在，跳过", fromCmdACL.Name)
+            continue
+        }
+        
+        w.jmsClient.org = w.migrateToOrg
+        w.ConvertCmdFilterACLResource(&fromCmdACL)
+        newCmdACL, err := w.jmsClient.CreateCommandFilterACL(fromCmdACL)
+        if err != nil {
+            logger.Errorf("[迁移命令组过滤]迁移失败: %v", err)
+            os.Exit(1)
+        }
+        w.migrateFromCommandFilterACLMapping[fromCmdACL.ID] = newCmdACL.ID
+        logger.Infof("[迁移命令组过滤]迁移(%s)到组织(%s)成功\n", fromCmdACL.Name, w.migrateToOrg.Name)
+    }
+    logger.Info("[迁移命令组过滤]------ 结束 ------\n\n")
+}
+
+func (w *Worker) MigrateCommandFilter() {
+    w.MigrateCommandGroup()
+    w.MigrateCommandFilterACL()
+}
+
 func (w *Worker) MigrateCloudSync() {
     w.MigrateCloudAccount()
     w.MigrateCloudStrategy()
@@ -1488,7 +1666,6 @@ func (w *Worker) MigrateCloudStrategy() {
         }
         
         w.jmsClient.org = w.migrateToOrg
-        // TODO 这里的资源要根据类型替换下实际 ID
         w.ConvertStrategyActions(fromStrategy)
         newStrategy, err := w.jmsClient.CreateCloudStrategy(fromStrategy)
         if err != nil {
@@ -1696,6 +1873,7 @@ func (w *Worker) Do() {
     w.MigrateDomain()
     w.MigrateAsset()
     w.MigratePerm()
+    w.MigrateCommandFilter()
     w.MigrateCloudSync()
     w.MigrateDomainPost()
     w.ClearMigrateOrg()
@@ -1703,17 +1881,18 @@ func (w *Worker) Do() {
 
 func main() {
     worker := Worker{
-        migrateFromNodeMapping:                make(map[string]string),
-        migrateFromAssetMapping:               make(map[string]string),
-        migrateFromUserMapping:                make(map[string]string),
-        migrateFromUserGroupMapping:           make(map[string]string),
-        migrateFromPermMapping:                make(map[string]string),
-        migrateFromDomainMapping:              make(map[string]string),
-        migrateFromAccountTemplateMapping:     make(map[string]string),
-        migrateFromCloudAccountMapping:        make(map[string]string),
-        migrateFromCloudStrategyMapping:       make(map[string]string),
-        migrateFromCloudStrategyActionMapping: make(map[string]string),
-        migrateFromCloudTaskMapping:           make(map[string]string),
+        migrateFromNodeMapping:             make(map[string]string),
+        migrateFromAssetMapping:            make(map[string]string),
+        migrateFromUserMapping:             make(map[string]string),
+        migrateFromUserGroupMapping:        make(map[string]string),
+        migrateFromPermMapping:             make(map[string]string),
+        migrateFromDomainMapping:           make(map[string]string),
+        migrateFromAccountTemplateMapping:  make(map[string]string),
+        migrateFromCloudAccountMapping:     make(map[string]string),
+        migrateFromCloudStrategyMapping:    make(map[string]string),
+        migrateFromCloudTaskMapping:        make(map[string]string),
+        migrateFromCommandGroupMapping:     make(map[string]string),
+        migrateFromCommandFilterACLMapping: make(map[string]string),
     }
     worker.Do()
 }

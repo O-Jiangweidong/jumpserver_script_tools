@@ -266,11 +266,7 @@ type Domain struct {
     Comment  string    `json:"comment,omitempty"`
 }
 
-type SecretType struct {
-    Value string `json:"value"`
-}
-
-type SecretStrategy struct {
+type ValueType struct {
     Value string `json:"value"`
 }
 
@@ -282,7 +278,7 @@ type SuFrom struct {
 type Account struct {
     ID         string      `json:"id,omitempty"`
     Privileged bool        `json:"privileged"`
-    SecretType SecretType  `json:"secret_type"`
+    SecretType ValueType   `json:"secret_type"`
     IsActive   bool        `json:"is_active"`
     Name       string      `json:"name"`
     Username   string      `json:"username"`
@@ -295,16 +291,86 @@ type Account struct {
 }
 
 type AccountTemplate struct {
-    ID             string         `json:"id,omitempty"`
-    Name           string         `json:"name"`
-    Username       string         `json:"username"`
-    AutoPush       bool           `json:"auto_push"`
-    Privileged     bool           `json:"privileged"`
-    SecretStrategy SecretStrategy `json:"secret_strategy"`
-    SecretType     SecretType     `json:"secret_type"`
-    Comment        string         `json:"comment,omitempty"`
-    Secret         string         `json:"secret"`
-    SuFrom         *SuFrom        `json:"su_from,omitempty"`
+    ID             string    `json:"id,omitempty"`
+    Name           string    `json:"name"`
+    Username       string    `json:"username"`
+    AutoPush       bool      `json:"auto_push"`
+    Privileged     bool      `json:"privileged"`
+    SecretStrategy ValueType `json:"secret_strategy"`
+    SecretType     ValueType `json:"secret_type"`
+    Comment        string    `json:"comment,omitempty"`
+    Secret         string    `json:"secret"`
+    SuFrom         *SuFrom   `json:"su_from,omitempty"`
+}
+
+type CloudAccount struct {
+    ID       string    `json:"id"`
+    Name     string    `json:"name"`
+    Provider ValueType `json:"provider"`
+    Comment  string    `json:"comment,omitempty"`
+}
+
+type StrategyActionValue struct {
+    ID interface{} `json:"id"`
+}
+
+func (v StrategyActionValue) MarshalJSON() ([]byte, error) {
+    return json.Marshal(v.ID)
+}
+
+type StrategyAction struct {
+    Attr      ValueType           `json:"attr"`
+    Value     StrategyActionValue `json:"value"`
+    Protocols []Protocol          `json:"protocols,omitempty"`
+}
+
+type StrategyRule struct {
+    Attr  ValueType `json:"attr"`
+    Match ValueType `json:"match"`
+    Value string    `json:"value"`
+}
+
+type CloudStrategy struct {
+    ID           string           `json:"id"`
+    Name         string           `json:"name"`
+    Priority     int              `json:"priority"`
+    Comment      string           `json:"comment,omitempty"`
+    RuleRelation ValueType        `json:"rule_relation"`
+    Actions      []StrategyAction `json:"strategy_actions"`
+    Rules        []StrategyRule   `json:"strategy_rules"`
+}
+
+type CloudTask struct {
+    ID                    string          `json:"id,omitempty"`
+    Name                  string          `json:"name"`
+    Account               *CloudAccount   `json:"account,omitempty"`
+    FullySynchronous      bool            `json:"fully_synchronous"`
+    IsAlwaysUpdate        bool            `json:"is_always_update"`
+    IsPeriodic            bool            `json:"is_periodic"`
+    ReleaseAssets         bool            `json:"release_assets"`
+    HostnameStrategy      ValueType       `json:"hostname_strategy"`
+    Interval              int             `json:"interval"`
+    SyncIpType            int             `json:"sync_ip_type"`
+    Regions               []string        `json:"regions"`
+    IpNetworkSegmentGroup []string        `json:"ip_network_segment_group"`
+    Strategies            []CloudStrategy `json:"strategy"`
+    Comment               string          `json:"comment,omitempty"`
+}
+
+func (v CloudTask) MarshalJSON() ([]byte, error) {
+    type Alias CloudTask
+    var strategies []string
+    for _, strategy := range v.Strategies {
+        strategies = append(strategies, strategy.ID)
+    }
+    
+    return json.Marshal(&struct {
+        Strategies []string `json:"strategy"`
+        *Alias
+    }{
+        Strategies: strategies,
+        Alias:      (*Alias)(&v),
+    })
 }
 
 type Perm struct {
@@ -730,6 +796,42 @@ func (c *JMSClient) GetDomains() []Domain {
     return domains
 }
 
+func (c *JMSClient) GetCloudAccounts() []CloudAccount {
+    url := "/api/v1/xpack/cloud/accounts/"
+    result, _ := c.GetWithPage(url)
+    var accounts []CloudAccount
+    err := json.Unmarshal(result, &accounts)
+    if err != nil {
+        logger.Errorf("获取云账号失败: %v", err)
+        os.Exit(1)
+    }
+    return accounts
+}
+
+func (c *JMSClient) GetCloudStrategies() []CloudStrategy {
+    url := "/api/v1/xpack/cloud/strategies/"
+    result, _ := c.GetWithPage(url)
+    var strategies []CloudStrategy
+    err := json.Unmarshal(result, &strategies)
+    if err != nil {
+        logger.Errorf("获取云同步策略失败: %v", err)
+        os.Exit(1)
+    }
+    return strategies
+}
+
+func (c *JMSClient) GetCloudTasks() []CloudTask {
+    url := "/api/v1/xpack/cloud/sync-instance-tasks/"
+    result, _ := c.GetWithPage(url)
+    var tasks []CloudTask
+    err := json.Unmarshal(result, &tasks)
+    if err != nil {
+        logger.Errorf("获取云同步任务失败: %v", err)
+        os.Exit(1)
+    }
+    return tasks
+}
+
 func (c *JMSClient) GetAccountTemplates() []AccountTemplate {
     url := "/api/v1/accounts/account-templates/"
     result, _ := c.GetWithPage(url)
@@ -785,6 +887,51 @@ func (c *JMSClient) CreateUserGroup(userGroup UserGroup) (*UserGroup, error) {
         return nil, err
     }
     return &newUserGroup, nil
+}
+
+func (c *JMSClient) CreateCloudAccount(account CloudAccount) (*CloudAccount, error) {
+    url := "/api/v1/xpack/cloud/accounts/"
+    var newAccount CloudAccount
+    account.ID = uuid.New().String()
+    result, err := c.Post(url, account)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newAccount)
+    if err != nil {
+        return nil, err
+    }
+    return &newAccount, nil
+}
+
+func (c *JMSClient) CreateCloudStrategy(strategy CloudStrategy) (*CloudStrategy, error) {
+    url := "/api/v1/xpack/cloud/strategies/"
+    var newStrategy CloudStrategy
+    strategy.ID = uuid.New().String()
+    result, err := c.Post(url, strategy)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newStrategy)
+    if err != nil {
+        return nil, err
+    }
+    return &newStrategy, nil
+}
+
+func (c *JMSClient) CreateCloudTask(task CloudTask) (*CloudTask, error) {
+    url := "/api/v1/xpack/cloud/sync-instance-tasks/"
+    var newTask CloudTask
+    task.ID = uuid.New().String()
+    result, err := c.Post(url, task)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal(result, &newTask)
+    if err != nil {
+        return nil, err
+    }
+    return &newTask, nil
 }
 
 func (c *JMSClient) CreateDomain(domain Domain) (*Domain, error) {
@@ -901,14 +1048,18 @@ type Worker struct {
     migrateFromOrg Organization
     migrateToOrg   Organization
     
-    migrateFromUserMapping            map[string]string
-    migrateFromUserGroupMapping       map[string]string
-    migrateFromAssetMapping           map[string]string
-    migrateFromNodeMapping            map[string]string
-    migrateFromPermMapping            map[string]string
-    migrateFromDomainMapping          map[string]string
-    migrateFromAccountTemplateMapping map[string]string
-    migrateDomainList                 []Domain
+    migrateFromUserMapping                map[string]string
+    migrateFromUserGroupMapping           map[string]string
+    migrateFromAssetMapping               map[string]string
+    migrateFromNodeMapping                map[string]string
+    migrateFromPermMapping                map[string]string
+    migrateFromDomainMapping              map[string]string
+    migrateFromAccountTemplateMapping     map[string]string
+    migrateFromCloudAccountMapping        map[string]string
+    migrateFromCloudStrategyMapping       map[string]string
+    migrateFromCloudStrategyActionMapping map[string]string
+    migrateFromCloudTaskMapping           map[string]string
+    migrateDomainList                     []Domain
 }
 
 func (w *Worker) ParseOption() {
@@ -1271,6 +1422,124 @@ func (w *Worker) MigratePerm() {
     logger.Info("[迁移授权]------ 结束 ------\n\n")
 }
 
+func (w *Worker) MigrateCloudSync() {
+    w.MigrateCloudAccount()
+    w.MigrateCloudStrategy()
+    w.MigrateCloudSyncTask()
+}
+
+func (w *Worker) MigrateCloudAccount() {
+    logger.Infoln("[迁移云账号]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, account := range w.jmsClient.GetCloudAccounts() {
+        localResourceSet.Add(account.Name, account.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    for _, fromAccount := range w.jmsClient.GetCloudAccounts() {
+        if toAccountId, exists := localResourceSet.Exist(fromAccount.Name); exists {
+            w.migrateFromCloudAccountMapping[fromAccount.ID] = toAccountId
+            logger.Warnf("[迁移云账号](%s)已经存在，跳过", fromAccount.Name)
+            continue
+        }
+        
+        w.jmsClient.org = w.migrateToOrg
+        newAccount, err := w.jmsClient.CreateCloudAccount(fromAccount)
+        if err != nil {
+            logger.Errorf("[迁移云账号]迁移失败: %v", err)
+            os.Exit(1)
+        }
+        w.migrateFromCloudAccountMapping[fromAccount.ID] = newAccount.ID
+        logger.Infof("[迁移云账号]迁移(%s)到组织(%s)成功\n", fromAccount.Name, w.migrateToOrg.Name)
+    }
+    logger.Info("[迁移云账号]------ 结束 ------\n\n")
+}
+
+func (w *Worker) ConvertStrategyActions(strategy CloudStrategy) {
+    var mapping map[string]string
+    for i, action := range strategy.Actions {
+        switch action.Attr.Value {
+        case "account_template":
+            mapping = w.migrateFromAccountTemplateMapping
+        case "domain":
+            mapping = w.migrateFromDomainMapping
+        case "node":
+            mapping = w.migrateFromNodeMapping
+        case "platform":
+            continue
+        }
+        strategy.Actions[i].Value.ID = mapping[action.Value.ID.(string)]
+    }
+}
+
+func (w *Worker) MigrateCloudStrategy() {
+    logger.Infoln("[迁移云同步策略]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, strategy := range w.jmsClient.GetCloudStrategies() {
+        localResourceSet.Add(strategy.Name, strategy.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    for _, fromStrategy := range w.jmsClient.GetCloudStrategies() {
+        if toStrategyId, exists := localResourceSet.Exist(fromStrategy.Name); exists {
+            w.migrateFromCloudStrategyMapping[fromStrategy.ID] = toStrategyId
+            logger.Warnf("[迁移云同步策略](%s)已经存在，跳过", fromStrategy.Name)
+            continue
+        }
+        
+        w.jmsClient.org = w.migrateToOrg
+        // TODO 这里的资源要根据类型替换下实际 ID
+        w.ConvertStrategyActions(fromStrategy)
+        newStrategy, err := w.jmsClient.CreateCloudStrategy(fromStrategy)
+        if err != nil {
+            logger.Errorf("[迁移云同步策略]失败: %v", err)
+            os.Exit(1)
+        }
+        w.migrateFromCloudStrategyMapping[fromStrategy.ID] = newStrategy.ID
+        logger.Infof("[迁移云同步策略]迁移(%s)到组织(%s)成功\n", fromStrategy.Name, w.migrateToOrg.Name)
+    }
+    logger.Info("[迁移云同步策略]------ 结束 ------\n\n")
+}
+
+func (w *Worker) MigrateCloudSyncTask() {
+    logger.Infoln("[迁移云同步任务]------ 开始 ------")
+    w.jmsClient.org = w.migrateToOrg
+    var localResourceSet = ResourceSet{}
+    for _, task := range w.jmsClient.GetCloudTasks() {
+        localResourceSet.Add(task.Name, task.ID)
+    }
+    w.jmsClient.org = w.migrateFromOrg
+    for _, fromTask := range w.jmsClient.GetCloudTasks() {
+        if toTaskId, exists := localResourceSet.Exist(fromTask.Name); exists {
+            w.migrateFromCloudTaskMapping[fromTask.ID] = toTaskId
+            logger.Warnf("[迁移云同步任务](%s)已经存在，跳过", fromTask.Name)
+            continue
+        }
+        
+        w.jmsClient.org = w.migrateToOrg
+        if fromTask.Account != nil {
+            if aId, exists := w.migrateFromCloudAccountMapping[fromTask.Account.ID]; exists {
+                fromTask.Account.ID = aId
+            }
+        }
+        var convertStrategies []CloudStrategy
+        for _, strategy := range fromTask.Strategies {
+            convertStrategies = append(convertStrategies, CloudStrategy{
+                ID: w.migrateFromCloudStrategyMapping[strategy.ID],
+            })
+        }
+        fromTask.Strategies = convertStrategies
+        newTask, err := w.jmsClient.CreateCloudTask(fromTask)
+        if err != nil {
+            logger.Errorf("[迁移云同步任务]失败: %v", err)
+            os.Exit(1)
+        }
+        w.migrateFromCloudTaskMapping[fromTask.ID] = newTask.ID
+        logger.Infof("[迁移云同步任务]迁移(%s)到组织(%s)成功\n", fromTask.Name, w.migrateToOrg.Name)
+    }
+    logger.Info("[迁移云同步任务]------ 结束 ------\n\n")
+}
+
 func (w *Worker) MigrateDomain() {
     logger.Infoln("[迁移网域]------ 开始 ------")
     w.jmsClient.org = w.migrateToOrg
@@ -1313,13 +1582,11 @@ func (w *Worker) MigrateDomainPost() {
     logger.Info("[迁移网域]------ 结束更新 ------\n\n")
 }
 
-func (w *Worker) RemoveUsers() {
-    userCount := len(w.migrateFromUserMapping)
-    logger.Infof("[清理原组织用户(%v个)]------ 开始 ------\n", userCount)
+func (w *Worker) BulkDelete(name, url string, mapping map[string]string) {
+    logger.Infof("[清理原组织%s(%v个)]------ 开始 ------\n", name, len(mapping))
     var deleteIDs []string
-    url := "/api/v1/users/users/remove/"
-    for userID, _ := range w.migrateFromUserMapping {
-        deleteIDs = append(deleteIDs, userID)
+    for id, _ := range mapping {
+        deleteIDs = append(deleteIDs, id)
         if len(deleteIDs) == w.options.PageLimit {
             w.jmsClient.BulkDelete(url, "POST", deleteIDs)
             deleteIDs = []string{}
@@ -1328,43 +1595,22 @@ func (w *Worker) RemoveUsers() {
     if len(deleteIDs) > 0 {
         w.jmsClient.BulkDelete(url, "POST", deleteIDs)
     }
-    logger.Info("[清理原组织用户]------ 结束 ------\n\n")
+    logger.Infof("[清理原组织%s]------ 结束 ------\n\n", name)
+}
+
+func (w *Worker) RemoveUsers() {
+    url := "/api/v1/users/users/remove/"
+    w.BulkDelete("用户", url, w.migrateFromUserMapping)
 }
 
 func (w *Worker) DeleteUserGroups() {
-    userGroupCount := len(w.migrateFromUserGroupMapping)
-    logger.Infof("[清理原组织用户组(%v个)]------ 开始 ------\n", userGroupCount)
-    var deleteIDs []string
     url := "/api/v1/users/groups/"
-    for userGroupID, _ := range w.migrateFromUserGroupMapping {
-        deleteIDs = append(deleteIDs, userGroupID)
-        if len(deleteIDs) == w.options.PageLimit {
-            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-            deleteIDs = []string{}
-        }
-    }
-    if len(deleteIDs) > 0 {
-        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-    }
-    logger.Info("[清理原组织用户组]------ 结束 ------\n\n")
+    w.BulkDelete("用户组", url, w.migrateFromUserGroupMapping)
 }
 
 func (w *Worker) DeleteAssets() {
-    assetCount := len(w.migrateFromAssetMapping)
-    logger.Infof("[清理原组织资产(%v个)]------ 开始 ------\n", assetCount)
-    var deleteIDs []string
     url := "/api/v1/assets/assets/"
-    for assetID, _ := range w.migrateFromAssetMapping {
-        deleteIDs = append(deleteIDs, assetID)
-        if len(deleteIDs) == w.options.PageLimit {
-            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-            deleteIDs = []string{}
-        }
-    }
-    if len(deleteIDs) > 0 {
-        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-    }
-    logger.Info("[清理原组织资产]------ 结束 ------\n\n")
+    w.BulkDelete("资产", url, w.migrateFromAssetMapping)
 }
 
 func (w *Worker) DeleteNodes() {
@@ -1377,57 +1623,39 @@ func (w *Worker) DeleteNodes() {
 }
 
 func (w *Worker) DeleteDomains() {
-    domainCount := len(w.migrateFromDomainMapping)
-    logger.Infof("[清理原组织网域(%v个)]------ 开始 ------\n", domainCount)
-    var deleteIDs []string
     url := "/api/v1/assets/domains/"
-    for domainID, _ := range w.migrateFromDomainMapping {
-        deleteIDs = append(deleteIDs, domainID)
-        if len(deleteIDs) == w.options.PageLimit {
-            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-            deleteIDs = []string{}
-        }
-    }
-    if len(deleteIDs) > 0 {
-        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-    }
-    logger.Info("[清理原组织网域]------ 结束 ------\n\n")
+    w.BulkDelete("网域", url, w.migrateFromDomainMapping)
+}
+
+func (w *Worker) DeleteCloudSync() {
+    w.DeleteCloudAccounts()
+    w.DeleteCloudStrategies()
+    w.DeleteCloudTasks()
+}
+
+func (w *Worker) DeleteCloudAccounts() {
+    url := "/api/v1/xpack/cloud/accounts/"
+    w.BulkDelete("云账号", url, w.migrateFromCloudAccountMapping)
+}
+
+func (w *Worker) DeleteCloudStrategies() {
+    url := "/api/v1/xpack/cloud/strategies/"
+    w.BulkDelete("云同步策略", url, w.migrateFromCloudStrategyMapping)
+}
+
+func (w *Worker) DeleteCloudTasks() {
+    url := "/api/v1/xpack/cloud/ync-instance-tasks/"
+    w.BulkDelete("云同步任务", url, w.migrateFromCloudTaskMapping)
 }
 
 func (w *Worker) DeleteAccountTemplates() {
-    accountTemplateCount := len(w.migrateFromAccountTemplateMapping)
-    logger.Infof("[清理原组织账号模板(%v个)]------ 开始 ------\n", accountTemplateCount)
-    var deleteIDs []string
     url := "/api/v1/accounts/account-templates/"
-    for accountTemplateID, _ := range w.migrateFromAccountTemplateMapping {
-        deleteIDs = append(deleteIDs, accountTemplateID)
-        if len(deleteIDs) == w.options.PageLimit {
-            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-            deleteIDs = []string{}
-        }
-    }
-    if len(deleteIDs) > 0 {
-        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-    }
-    logger.Info("[清理原组织账号模板]------ 结束 ------\n\n")
+    w.BulkDelete("账号模板", url, w.migrateFromAccountTemplateMapping)
 }
 
 func (w *Worker) DeletePerms() {
-    permCount := len(w.migrateFromPermMapping)
-    logger.Infof("[清理原组织授权(%v个)]------ 开始 ------\n", permCount)
-    var deleteIDs []string
     url := "/api/v1/perms/asset-permissions/"
-    for permID, _ := range w.migrateFromPermMapping {
-        deleteIDs = append(deleteIDs, permID)
-        if len(deleteIDs) == w.options.PageLimit {
-            w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-            deleteIDs = []string{}
-        }
-    }
-    if len(deleteIDs) > 0 {
-        w.jmsClient.BulkDelete(url, "DELETE", deleteIDs)
-    }
-    logger.Info("[清理原组织授权]------ 结束 ------\n\n")
+    w.BulkDelete("授权", url, w.migrateFromPermMapping)
 }
 
 func (w *Worker) DeleteOrg() {
@@ -1447,6 +1675,7 @@ func (w *Worker) ClearMigrateOrg() {
         logger.Info("[清理原组织资源]------ 开始 ------")
         w.RemoveUsers()
         w.DeleteUserGroups()
+        w.DeleteCloudSync()
         w.DeleteAssets()
         w.DeleteAccountTemplates()
         w.DeleteDomains()
@@ -1467,19 +1696,24 @@ func (w *Worker) Do() {
     w.MigrateDomain()
     w.MigrateAsset()
     w.MigratePerm()
+    w.MigrateCloudSync()
     w.MigrateDomainPost()
     w.ClearMigrateOrg()
 }
 
 func main() {
     worker := Worker{
-        migrateFromNodeMapping:            make(map[string]string),
-        migrateFromAssetMapping:           make(map[string]string),
-        migrateFromUserMapping:            make(map[string]string),
-        migrateFromUserGroupMapping:       make(map[string]string),
-        migrateFromPermMapping:            make(map[string]string),
-        migrateFromDomainMapping:          make(map[string]string),
-        migrateFromAccountTemplateMapping: make(map[string]string),
+        migrateFromNodeMapping:                make(map[string]string),
+        migrateFromAssetMapping:               make(map[string]string),
+        migrateFromUserMapping:                make(map[string]string),
+        migrateFromUserGroupMapping:           make(map[string]string),
+        migrateFromPermMapping:                make(map[string]string),
+        migrateFromDomainMapping:              make(map[string]string),
+        migrateFromAccountTemplateMapping:     make(map[string]string),
+        migrateFromCloudAccountMapping:        make(map[string]string),
+        migrateFromCloudStrategyMapping:       make(map[string]string),
+        migrateFromCloudStrategyActionMapping: make(map[string]string),
+        migrateFromCloudTaskMapping:           make(map[string]string),
     }
     worker.Do()
 }

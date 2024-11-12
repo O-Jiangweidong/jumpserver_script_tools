@@ -59,8 +59,8 @@ type CmdOptions struct {
     PageLimit       int
     SyncDelete      bool
     
-    MigrateFromOrgID string
-    MigrateToOrgID   string
+    MigrateFromOrg string
+    MigrateToOrg   string
 }
 
 type JMSConfig struct {
@@ -121,7 +121,7 @@ type Action struct {
 
 type SimpleAsset struct {
     ID        string     `json:"id"`
-    Name      string     `json:"name"`
+    Name      string     `json:"name,omitempty"`
     Address   string     `json:"address,omitempty"`
     Comment   string     `json:"comment,omitempty"`
     Domain    *Domain    `json:"domain,omitempty"`
@@ -131,18 +131,28 @@ type SimpleAsset struct {
     Protocols []Protocol `json:"protocols,omitempty"`
 }
 
+func (sa *SimpleAsset) CopyAsset(category string, w *Worker) (*SimpleAsset, error) {
+    var asset *SimpleAsset
+    var err error
+    if category == "hosts" {
+        sa.ID = fmt.Sprintf("%s-%s", sa.ID[:18], w.migrateToOrg.ID[18:])
+    } else {
+        sa.ID = uuid.New().String()
+    }
+    asset, err = w.jmsClient.CreateAsset(category, sa.Platform.ID, *sa)
+    return asset, err
+}
+
 func (sa *SimpleAsset) HandleCreate(category string, w *Worker) {
     sa.HandleNodes(w)
     sa.HandleDomain(w)
     suFromAccounts := sa.HandleAccounts(w)
     oldAssetID := sa.ID
     w.jmsClient.org = w.migrateToOrg
-    sa.ID = uuid.New().String()
-    // 这里函数参数定义一个函数，这里去调用吧
-    newAsset, err := w.jmsClient.CreateAsset(category, sa.Platform.ID, *sa)
+    newAsset, err := sa.CopyAsset(category, w)
     if err != nil {
         fmt.Printf("%v\n", sa.Domain)
-        logger.Errorf("[迁移资产]迁移失败: %v", err)
+        logger.Errorf("[迁移资产]迁移%s失败: %v", sa.Name, err)
         os.Exit(1)
     }
     var accountMapping = make(map[string]string)
@@ -155,7 +165,7 @@ func (sa *SimpleAsset) HandleCreate(category string, w *Worker) {
         account.Asset = SimpleAsset{ID: newAsset.ID}
         _, err = w.jmsClient.CreateAccount(account)
         if err != nil {
-            logger.Infof("[迁移资产]资产(%s)下的账号(%s)失败", sa.Name, account.Name)
+            logger.Infof("[迁移资产](%s) 下的账号 (%s) 失败", sa.Name, account.Name)
         }
     }
     w.migrateFromAssetMapping[oldAssetID] = newAsset.ID
@@ -222,7 +232,7 @@ func (d *Database) HandleCreate(category string, w *Worker) {
     // 这里函数参数定义一个函数，这里去调用吧
     newAsset, err := w.jmsClient.CreateAsset(category, d.Platform.ID, *d)
     if err != nil {
-        logger.Errorf("[迁移资产]迁移数据库失败: %v", err)
+        logger.Errorf("[迁移资产]迁移数据库 %s 失败: %v", d.Name, err)
         os.Exit(1)
     }
     var accountMapping = make(map[string]string)
@@ -235,7 +245,7 @@ func (d *Database) HandleCreate(category string, w *Worker) {
         account.Asset = SimpleAsset{ID: newAsset.ID}
         _, err = w.jmsClient.CreateAccount(account)
         if err != nil {
-            logger.Infof("[迁移资产]数据库(%s)下的账号(%s)失败", d.Name, account.Name)
+            logger.Infof("[迁移资产]数据库 (%s) 下的账号 (%s) 失败", d.Name, account.Name)
         }
     }
     w.migrateFromAssetMapping[oldAssetID] = newAsset.ID
@@ -371,7 +381,7 @@ func (v CloudTask) MarshalJSON() ([]byte, error) {
     }
     
     return json.Marshal(&struct {
-        Strategies []string `json:"strategy"`
+        Strategies []string `json:"strategy,omitempty"`
         *Alias
     }{
         Strategies: strategies,
@@ -400,6 +410,20 @@ type ResourceSelect struct {
     Attrs []ResourceSelectAttr `json:"attrs,omitempty"`
 }
 
+func (v ResourceSelect) MarshalJSON() ([]byte, error) {
+    type Alias ResourceSelect
+    if len(v.Ids) == 0 {
+        v.Ids = []string{}
+    }
+    return json.Marshal(&struct {
+        Ids []string `json:"ids"`
+        *Alias
+    }{
+        Ids:   v.Ids,
+        Alias: (*Alias)(&v),
+    })
+}
+
 type CommandACL struct {
     ID            string         `json:"id"`
     Name          string         `json:"name"`
@@ -407,9 +431,9 @@ type CommandACL struct {
     IsActive      bool           `json:"is_active"`
     Priority      int            `json:"priority"`
     Action        ValueType      `json:"action"`
-    CommandGroups []CommandGroup `json:"command_groups"`
+    CommandGroups []CommandGroup `json:"command_groups,omitempty"`
     Accounts      []string       `json:"accounts"`
-    Reviewers     []User         `json:"reviewers"`
+    Reviewers     []User         `json:"reviewers,omitempty"`
     Users         ResourceSelect `json:"users"`
     Assets        ResourceSelect `json:"assets"`
 }
@@ -589,6 +613,15 @@ func (c *JMSClient) Patch(url string, data any) ([]byte, error) {
     return c.GetBody(request)
 }
 
+func (c *JMSClient) Put(url string, data any) ([]byte, error) {
+    byteData, _ := json.Marshal(data)
+    request, err := c.NewRequest("PUT", url, bytes.NewBuffer(byteData))
+    if err != nil {
+        return nil, err
+    }
+    return c.GetBody(request)
+}
+
 func (c *JMSClient) Delete(url string) error {
     request, err := c.NewRequest("DELETE", url, nil)
     if err != nil {
@@ -753,7 +786,7 @@ func (c *JMSClient) GetAssetAccount(asset SimpleAsset) []Account {
     var accounts []Account
     err := json.Unmarshal(result, &accounts)
     if err != nil {
-        logger.Errorf("获取资产(%s)账号失败: %v", asset.Name, err)
+        logger.Errorf("获取资产 (%s) 账号失败: %v", asset.Name, err)
         os.Exit(1)
     }
     return accounts
@@ -1047,13 +1080,21 @@ func (c *JMSClient) CreateDomain(domain Domain) (*Domain, error) {
 }
 
 func (c *JMSClient) UpdateDomain(domain Domain) error {
-    result, err := c.Patch(fmt.Sprintf("/api/v1/assets/domains/%s/", domain.ID), domain)
+    result, err := c.Put(fmt.Sprintf("/api/v1/assets/domains/%s/", domain.ID), domain)
     if err != nil {
         return err
     }
     var newDomain Domain
     err = json.Unmarshal(result, &newDomain)
     if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (c *JMSClient) DeleteAsset(category string, assetId string) error {
+    url := "/api/v1/assets/%s/%s/"
+    if err := c.Delete(fmt.Sprintf(url, category, assetId)); err != nil {
         return err
     }
     return nil
@@ -1092,7 +1133,7 @@ func (c *JMSClient) CreatePerm(perm Perm) {
     url := "/api/v1/perms/asset-permissions/"
     _, err := c.Post(url, perm)
     if err != nil {
-        logger.Errorf("[迁移授权]创建授权失败: %v", err)
+        logger.Errorf("[迁移授权]创建授权 %s 失败: %v", perm.Name, err)
         os.Exit(1)
     }
 }
@@ -1161,8 +1202,8 @@ type Worker struct {
 func (w *Worker) ParseOption() {
     opts := CmdOptions{}
     flag.StringVar(&opts.JmsServerURL, "jms-url", opts.JmsServerURL, "JumpServer 服务地址")
-    flag.StringVar(&opts.MigrateFromOrgID, "from-org", DefaultOrgID, "迁出组织 ID")
-    flag.StringVar(&opts.MigrateToOrgID, "to-org", "", "迁入组织 ID")
+    flag.StringVar(&opts.MigrateFromOrg, "from-org", DefaultOrgID, "迁出组织的名称或者 ID")
+    flag.StringVar(&opts.MigrateToOrg, "to-org", "", "迁入组织的名称或者 ID")
     flag.StringVar(&opts.AccessKeyID, "ak", opts.AccessKeyID, "用户API Key ID")
     flag.StringVar(&opts.AccessKeySecret, "sk", opts.AccessKeySecret, "用户API Key Secret")
     flag.StringVar(&opts.OtpSecret, "otp-secret", opts.AccessKeySecret, "MFA 密钥（数据库表 users_user 的 opt_secret_key 字段）")
@@ -1177,8 +1218,8 @@ func (w *Worker) ParseOption() {
         logger.Errorf("用户认证凭证不能为空, -h查看脚本使用方式")
         os.Exit(1)
     }
-    if opts.MigrateToOrgID == "" {
-        logger.Errorf("迁入组织 ID 不能为空, -h查看脚本使用方式")
+    if opts.MigrateToOrg == "" {
+        logger.Errorf("迁入组织 ID/Name 不能为空, -h查看脚本使用方式")
         os.Exit(1)
     }
     if opts.OtpSecret == "" {
@@ -1198,19 +1239,19 @@ func (w *Worker) CheckOrg() {
     }
     w.jmsClient = NewJMSClient(&config)
     for _, org := range w.jmsClient.GetOrganizations() {
-        if org.ID == w.options.MigrateFromOrgID {
+        if org.ID == w.options.MigrateFromOrg || org.Name == w.options.MigrateFromOrg {
             w.migrateFromOrg = org
         }
-        if org.ID == w.options.MigrateToOrgID {
+        if org.ID == w.options.MigrateToOrg || org.Name == w.options.MigrateToOrg {
             w.migrateToOrg = org
         }
     }
     if w.migrateToOrg.ID == "" {
-        logger.Errorf("迁出组织不在本系统中，请检查迁出组织 ID(%s) 后重试", w.options.MigrateToOrgID)
+        logger.Errorf("迁出组织不在本系统中，请检查迁出组织 ID/Name (%s) 后重试", w.options.MigrateToOrg)
         os.Exit(1)
     }
     if w.migrateFromOrg.ID == "" {
-        logger.Errorf("迁入组织不在本系统中，请检查迁出组织 ID(%s) 后重试", w.options.MigrateFromOrgID)
+        logger.Errorf("迁入组织不在本系统中，请检查迁出组织 ID/Name (%s) 后重试", w.options.MigrateFromOrg)
         os.Exit(1)
     }
 }
@@ -1231,17 +1272,17 @@ func (w *Worker) MigrateUserGroup() {
     for _, userGroup := range w.jmsClient.GetUserGroups() {
         if ugId, exists := localResourceSet.Exist(userGroup.Name); exists {
             w.migrateFromUserGroupMapping[userGroup.ID] = ugId
-            logger.Warnf("[迁移用户组]用户组(%s)已经存在，跳过\n", userGroup.Name)
+            logger.Warnf("[迁移用户组]用户组 (%s) 已经存在，跳过\n", userGroup.Name)
             continue
         }
         w.jmsClient.org = w.migrateToOrg
         newUserGroup, err := w.jmsClient.CreateUserGroup(userGroup)
         if err != nil {
-            logger.Errorf("迁移用户组失败: %v", err)
+            logger.Errorf("[迁移用户组]迁移失败: %v", err)
             os.Exit(1)
         }
         w.migrateFromUserGroupMapping[userGroup.ID] = newUserGroup.ID
-        logger.Infof("[迁移用户组]迁移用户组(%s)到组织(%s)成功\n", userGroup.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移用户组]迁移用户组 (%s) 到组织 (%s) 成功\n", userGroup.Name, w.migrateToOrg.Name)
     }
     logger.Infof("[迁移用户组]------ 结束 ------\n\n")
 }
@@ -1257,13 +1298,13 @@ func (w *Worker) MigrateUser() {
     for _, user := range w.jmsClient.GetUsers() {
         w.migrateFromUserMapping[user.ID] = user.ID
         if _, exists := toUserMapping[user.ID]; exists {
-            logger.Warnf("[迁移用户]组织(%s)下存在用户(%s), 跳过", w.jmsClient.org.Name, user.Name)
+            logger.Warnf("[迁移用户]组织 (%s) 下存在用户 (%s), 跳过", w.jmsClient.org.Name, user.Name)
             continue
         }
         w.jmsClient.org = w.migrateToOrg
         err := w.jmsClient.InviteUser(user)
         if err != nil {
-            logger.Errorf("迁移用户(%s)时，邀请失败: %v", user.Name, err)
+            logger.Errorf("迁移用户 (%s) 时，邀请失败: %v", user.Name, err)
             os.Exit(1)
         }
         var newUserGroups []UserGroup
@@ -1273,10 +1314,10 @@ func (w *Worker) MigrateUser() {
         user.UserGroups = newUserGroups
         err = w.jmsClient.UpdateUser(user)
         if err != nil {
-            logger.Errorf("迁移用户时(%s)，更新失败: %v", user.Name, err)
+            logger.Errorf("[迁移用户]更新 (%s) 失败: %v", user.Name, err)
             os.Exit(1)
         }
-        logger.Infof("[迁移用户]成功邀请用户(%s)到组织(%s)", user.Name, w.jmsClient.org.Name)
+        logger.Infof("[迁移用户]成功邀请用户 (%s) 到组织 (%s)", user.Name, w.jmsClient.org.Name)
     }
     logger.Infof("[迁移用户]------ 结束 ------\n\n")
 }
@@ -1293,7 +1334,7 @@ func (w *Worker) MigrateAccountTemplate() {
     for _, fromAT := range w.jmsClient.GetAccountTemplates() {
         if toATId, exists := localResourceSet.Exist(fromAT.Name); exists {
             w.migrateFromAccountTemplateMapping[fromAT.ID] = toATId
-            logger.Warnf("[迁移账号模板]模板(%s)已经存在，跳过", fromAT.Name)
+            logger.Warnf("[迁移账号模板](%s) 已经存在，跳过", fromAT.Name)
             continue
         }
         w.jmsClient.org = w.migrateFromOrg
@@ -1311,10 +1352,10 @@ func (w *Worker) MigrateAccountTemplate() {
         w.jmsClient.org = w.migrateToOrg
         newAT, err := w.jmsClient.CreateAccountTemplate(fromAT)
         if err != nil {
-            logger.Errorf("[迁移账号模板]迁移模板失败: %v", err)
+            logger.Errorf("[迁移账号模板]迁移 %s 失败: %v", fromAT.Name, err)
             os.Exit(1)
         }
-        logger.Infof("[迁移账号模板]迁移模板(%s)到组织(%s)成功\n", fromAT.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移账号模板]迁移 (%s) 到组织 (%s) 成功\n", fromAT.Name, w.migrateToOrg.Name)
         w.migrateFromAccountTemplateMapping[fromAT.ID] = newAT.ID
     }
     
@@ -1323,10 +1364,10 @@ func (w *Worker) MigrateAccountTemplate() {
         at.SuFrom.ID = w.migrateFromAccountTemplateMapping[at.SuFrom.ID]
         newAT, err := w.jmsClient.CreateAccountTemplate(at)
         if err != nil {
-            logger.Errorf("[迁移账号模板]迁移模板失败: %v", err)
+            logger.Errorf("[迁移账号模板]迁移 %s 失败: %v", at.Name, err)
             os.Exit(1)
         }
-        logger.Infof("[迁移账号模板]迁移模板(%s)到组织(%s)成功\n", at.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移账号模板]迁移 (%s) 到组织 (%s) 成功\n", at.Name, w.migrateToOrg.Name)
         w.migrateFromAccountTemplateMapping[at.ID] = newAT.ID
     }
     logger.Info("[迁移账号模板]------ 结束 ------\n\n")
@@ -1361,7 +1402,7 @@ func (w *Worker) MigrateNode() {
             continue
         }
         w.jmsClient.org = w.migrateToOrg
-        logger.Infof("[迁移节点]创建节点(%s)到组织(%s)\n", node.FullValue, w.migrateToOrg.Name)
+        logger.Infof("[迁移节点]创建 (%s) 到组织 (%s)\n", node.FullValue, w.migrateToOrg.Name)
         newNode, err := w.jmsClient.CreateNode(node)
         if err != nil {
             logger.Errorf("迁移节点失败: %v", err)
@@ -1417,65 +1458,65 @@ func (w *Worker) MigrateAssetSub(category string) {
             asset := a.(Host)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]主机(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]主机 (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]主机(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]主机 (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "devices":
             asset := a.(Device)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]网络设备(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]网络设备 (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]网络设备(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]网络设备 (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "databases":
             asset := a.(Database)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]数据库(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]数据库 (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]数据库(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]数据库 (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "clouds":
             asset := a.(Cloud)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]云服务(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]云服务 (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]云服务(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]云服务 (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "webs":
             asset := a.(Web)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]Web(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]Web (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]Web(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]Web (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "gpts":
             asset := a.(GPT)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]GPT(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]GPT (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]GPT(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]GPT (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         case "customs":
             asset := a.(Custom)
             if assetID, exists := localResourceSet.Exist(asset.Name); exists {
                 w.migrateFromAssetMapping[asset.ID] = assetID
-                logger.Warnf("[迁移资产]自定义(%s)已经存在，跳过", asset.Name)
+                logger.Warnf("[迁移资产]自定义 (%s) 已经存在，跳过", asset.Name)
                 continue
             }
             asset.HandleCreate(category, w)
-            logger.Infof("[迁移资产]自定义(%s)到组织(%s)成功\n", asset.Name, w.migrateToOrg.Name)
+            logger.Infof("[迁移资产]自定义 (%s) 到组织 (%s) 成功\n", asset.Name, w.migrateToOrg.Name)
         }
     }
     logger.Infof("[迁移 %s 资产]------ 结束 ------\n\n", category)
@@ -1492,7 +1533,7 @@ func (w *Worker) MigratePerm() {
     for _, perm := range w.jmsClient.GetPerms() {
         w.migrateFromPermMapping[perm.ID] = perm.ID
         if _, exists := localResourceSet.Exist(perm.Name); exists {
-            logger.Warnf("[迁移授权]授权(%s)已经存在，跳过", perm.Name)
+            logger.Warnf("[迁移授权](%s) 已经存在，跳过", perm.Name)
             continue
         }
         var newNodes []Node
@@ -1513,7 +1554,7 @@ func (w *Worker) MigratePerm() {
         perm.UserGroups = newUserGroups
         w.jmsClient.org = w.migrateToOrg
         w.jmsClient.CreatePerm(perm)
-        logger.Infof("[迁移授权]迁移授权(%s)到组织(%s)成功\n", perm.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移授权]迁移 (%s) 到组织 (%s) 成功\n", perm.Name, w.migrateToOrg.Name)
     }
     logger.Info("[迁移授权]------ 结束 ------\n\n")
 }
@@ -1529,18 +1570,18 @@ func (w *Worker) MigrateCommandGroup() {
     for _, fromCmdGroup := range w.jmsClient.GetCommandGroups() {
         if toCmdGroupId, exists := localResourceSet.Exist(fromCmdGroup.Name); exists {
             w.migrateFromCommandGroupMapping[fromCmdGroup.ID] = toCmdGroupId
-            logger.Warnf("[迁移命令组](%s)已经存在，跳过", fromCmdGroup.Name)
+            logger.Warnf("[迁移命令组](%s) 已经存在，跳过", fromCmdGroup.Name)
             continue
         }
         
         w.jmsClient.org = w.migrateToOrg
         newCmdGroup, err := w.jmsClient.CreateCommandGroup(fromCmdGroup)
         if err != nil {
-            logger.Errorf("[迁移命令组]迁移失败: %v", err)
+            logger.Errorf("[迁移命令组]迁移 %s 失败: %v", fromCmdGroup.Name, err)
             os.Exit(1)
         }
         w.migrateFromCommandGroupMapping[fromCmdGroup.ID] = newCmdGroup.ID
-        logger.Infof("[迁移命令组]迁移(%s)到组织(%s)成功\n", fromCmdGroup.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移命令组]迁移 (%s) 到组织 (%s) 成功\n", fromCmdGroup.Name, w.migrateToOrg.Name)
     }
     logger.Info("[迁移命令组]------ 结束 ------\n\n")
 }
@@ -1550,10 +1591,14 @@ func (w *Worker) ConvertCmdFilterACLResource(cmdACL *CommandACL) {
     var newGroups []CommandGroup
     var newReviewers []User
     for _, id := range cmdACL.Users.Ids {
-        newUserIds = append(newUserIds, w.migrateFromUserMapping[id])
+        if item, exist := w.migrateFromUserMapping[id]; exist {
+            newUserIds = append(newUserIds, item)
+        }
     }
     for _, id := range cmdACL.Assets.Ids {
-        newAssetIds = append(newAssetIds, w.migrateFromAssetMapping[id])
+        if item, exist := w.migrateFromAssetMapping[id]; exist {
+            newAssetIds = append(newAssetIds, item)
+        }
     }
     for _, cmdGroup := range cmdACL.CommandGroups {
         newGroups = append(newGroups, CommandGroup{ID: w.migrateFromCommandGroupMapping[cmdGroup.ID]})
@@ -1578,7 +1623,7 @@ func (w *Worker) MigrateCommandFilterACL() {
     for _, fromCmdACL := range w.jmsClient.GetCommandFilterACL() {
         if toCmdACLId, exists := localResourceSet.Exist(fromCmdACL.Name); exists {
             w.migrateFromCommandFilterACLMapping[fromCmdACL.ID] = toCmdACLId
-            logger.Warnf("[迁移命令组过滤](%s)已经存在，跳过", fromCmdACL.Name)
+            logger.Warnf("[迁移命令组过滤](%s) 已经存在，跳过", fromCmdACL.Name)
             continue
         }
         
@@ -1586,11 +1631,11 @@ func (w *Worker) MigrateCommandFilterACL() {
         w.ConvertCmdFilterACLResource(&fromCmdACL)
         newCmdACL, err := w.jmsClient.CreateCommandFilterACL(fromCmdACL)
         if err != nil {
-            logger.Errorf("[迁移命令组过滤]迁移失败: %v", err)
+            logger.Errorf("[迁移命令组过滤]迁移 (%s) 失败: %v", fromCmdACL.Name, err)
             os.Exit(1)
         }
         w.migrateFromCommandFilterACLMapping[fromCmdACL.ID] = newCmdACL.ID
-        logger.Infof("[迁移命令组过滤]迁移(%s)到组织(%s)成功\n", fromCmdACL.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移命令组过滤]迁移 (%s) 到组织 (%s) 成功\n", fromCmdACL.Name, w.migrateToOrg.Name)
     }
     logger.Info("[迁移命令组过滤]------ 结束 ------\n\n")
 }
@@ -1624,7 +1669,7 @@ func (w *Worker) MigrateCloudAccount() {
         w.jmsClient.org = w.migrateToOrg
         newAccount, err := w.jmsClient.CreateCloudAccount(fromAccount)
         if err != nil {
-            logger.Errorf("[迁移云账号]迁移失败: %v", err)
+            logger.Errorf("[迁移云账号]迁移 %s 失败: %v", fromAccount.Name, err)
             os.Exit(1)
         }
         w.migrateFromCloudAccountMapping[fromAccount.ID] = newAccount.ID
@@ -1669,7 +1714,7 @@ func (w *Worker) MigrateCloudStrategy() {
         w.ConvertStrategyActions(fromStrategy)
         newStrategy, err := w.jmsClient.CreateCloudStrategy(fromStrategy)
         if err != nil {
-            logger.Errorf("[迁移云同步策略]失败: %v", err)
+            logger.Errorf("[迁移云同步策略]迁移 %s 失败: %v", fromStrategy.Name, err)
             os.Exit(1)
         }
         w.migrateFromCloudStrategyMapping[fromStrategy.ID] = newStrategy.ID
@@ -1708,7 +1753,7 @@ func (w *Worker) MigrateCloudSyncTask() {
         fromTask.Strategies = convertStrategies
         newTask, err := w.jmsClient.CreateCloudTask(fromTask)
         if err != nil {
-            logger.Errorf("[迁移云同步任务]失败: %v", err)
+            logger.Errorf("[迁移云同步任务]迁移 %s 失败: %v", fromTask.Name, err)
             os.Exit(1)
         }
         w.migrateFromCloudTaskMapping[fromTask.ID] = newTask.ID
@@ -1742,19 +1787,28 @@ func (w *Worker) MigrateDomain() {
         newDomain.Gateways = gateways
         w.migrateDomainList = append(w.migrateDomainList, *newDomain)
         w.migrateFromDomainMapping[fromDomain.ID] = newDomain.ID
-        logger.Infof("[迁移网域]迁移网域(%s)到组织(%s)成功\n", fromDomain.Name, w.migrateToOrg.Name)
+        logger.Infof("[迁移网域]迁移网域 (%s) 到组织 (%s) 成功\n", fromDomain.Name, w.migrateToOrg.Name)
     }
     logger.Info("[迁移网域]------ 结束 ------\n\n")
 }
 
 func (w *Worker) MigrateDomainPost() {
     logger.Infoln("[迁移网域]------ 开始更新网关 ------")
+    w.jmsClient.org = w.migrateToOrg
     for _, domain := range w.migrateDomainList {
+        var newGateways []Gateway
+        for _, gateway := range domain.Gateways {
+            newGateways = append(newGateways, Gateway{
+                Host{SimpleAsset{ID: w.migrateFromAssetMapping[gateway.ID]}},
+            })
+        }
+        domain.Gateways = newGateways
         err := w.jmsClient.UpdateDomain(domain)
         if err != nil {
-            logger.Errorf("更新网域网关失败: %v", err)
+            logger.Errorf("[迁移网域]更新网域网关失败: %v", err)
             os.Exit(1)
         }
+        logger.Infof("[迁移网域]%s 更新成功\n", domain.Name)
     }
     logger.Info("[迁移网域]------ 结束更新 ------\n\n")
 }
@@ -1835,6 +1889,13 @@ func (w *Worker) DeletePerms() {
     w.BulkDelete("授权", url, w.migrateFromPermMapping)
 }
 
+func (w *Worker) DeleteCommandFilter() {
+    url1 := "/api/v1/acls/command-groups/"
+    w.BulkDelete("命令组", url1, w.migrateFromCommandGroupMapping)
+    url2 := "/api/v1/acls/command-filter-acls"
+    w.BulkDelete("命令过滤", url2, w.migrateFromCommandFilterACLMapping)
+}
+
 func (w *Worker) DeleteOrg() {
     logger.Infof("[清理原组织(%s)]------ 开始 ------\n", w.migrateFromOrg.Name)
     w.jmsClient.org = w.migrateToOrg
@@ -1858,6 +1919,7 @@ func (w *Worker) ClearMigrateOrg() {
         w.DeleteDomains()
         w.DeleteNodes()
         w.DeletePerms()
+        w.DeleteCommandFilter()
         w.DeleteOrg()
         logger.Info("[清理原组织资源------ 结束 ------\n\n")
     }
@@ -1877,6 +1939,7 @@ func (w *Worker) Do() {
     w.MigrateCloudSync()
     w.MigrateDomainPost()
     w.ClearMigrateOrg()
+    logger.Infof("从组织 %s 迁移到 组织 %s 成功\n", w.migrateFromOrg.Name, w.migrateToOrg.Name)
 }
 
 func main() {

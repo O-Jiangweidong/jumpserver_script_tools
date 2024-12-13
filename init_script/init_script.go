@@ -7,47 +7,76 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
 const (
-	Reset  = "\033[0m"
-	Red    = "\033[31m"
-	Green  = "\033[32m"
-	Yellow = "\033[33m"
-	Cyan   = "\033[36m"
+	Reset        = "\033[0m"
+	Green        = "\033[1;32m"
+	BrightCyan   = "\033[1;36m"
+	BrightYellow = "\033[1;33m"
+
+	DefaultNTPServer = "asia.pool.ntp.org"
+	TitleColor       = BrightCyan
 )
 
 func main() {
-	menuInput := flag.String("m", "", "输入菜单序号，多个用逗号隔开")
+	menuInput := flag.String("s", "", "输入菜单序号，多个用逗号隔开")
+	showHelp := flag.Bool("m", false, "显示菜单信息")
+	allDo := flag.Bool("a", false, "是否执行全部任务")
+	initNetwork := flag.Bool("i", false, "初始化私网信息")
+	test := flag.Bool("t", false, "Test")
 	flag.Parse()
 
-	if *menuInput != "" {
-		// 处理多个菜单序号
-		menus := strings.Split(*menuInput, ",")
-		for _, menu := range menus {
-			menu = strings.TrimSpace(menu)
-			switch menu {
-			case "1":
-				disableSELinux()
-			case "2":
-				configTimeServer()
-			case "3":
-				optimizeSysParams()
-			case "4":
-				configureNetwork()
-			case "5":
-				disableRootLogin()
-			case "6":
-				outputSystemInfo()
-			default:
-				log.Printf("无效的菜单序号: %s", menu)
-			}
-		}
-		rebootMachine()
-	} else {
-		interactiveMenu()
+	if *test {
+		outputSystemInfo()
+		return
 	}
+
+	if *initNetwork {
+		initSelfNetwork()
+		return
+	}
+
+	if *showHelp {
+		showMenu()
+		return
+	}
+
+	if *allDo {
+		disableSELinux()
+		configTimeServer()
+		optimizeSysParams()
+		configureNetwork()
+		disableRootLogin()
+	} else {
+		if *menuInput != "" {
+			menus := strings.Split(*menuInput, ",")
+			for _, menu := range menus {
+				menu = strings.TrimSpace(menu)
+				switch menu {
+				case "1":
+					disableSELinux()
+				case "2":
+					configTimeServer()
+				case "3":
+					optimizeSysParams()
+				case "4":
+					configureNetwork()
+				case "5":
+					disableRootLogin()
+				default:
+					log.Printf("无效的菜单序号: %s", menu)
+				}
+			}
+		} else {
+			configureNetwork()
+		}
+	}
+	outputSystemInfo()
+	rebootMachine()
 }
 
 func disableSELinux() {
@@ -131,8 +160,11 @@ func configTimeServer() {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("请输入 NTP 服务器地址（多个地址用空格分隔）: ")
+	fmt.Printf("请输入 NTP 服务器地址（多个地址用空格分隔）, 默认 %s: ", DefaultNTPServer)
 	ntpServers, _ := reader.ReadString('\n')
+	if ntpServers == "" {
+		ntpServers = DefaultNTPServer
+	}
 	ntpServers = strings.TrimSpace(ntpServers)
 
 	if err := updateNTPServers(ntpServers); err != nil {
@@ -187,7 +219,8 @@ func optimizeSysParams() {
 	}
 
 	sysctlConfigs := map[string]string{
-		"fs.file-max": "fs.file-max = " + newLimit,
+		"fs.file-max":         "fs.file-max = " + newLimit,
+		"net.ipv4.ip_forward": "net.ipv4.ip_forward = 1",
 	}
 
 	if err := updateConfigFile("/etc/sysctl.conf", sysctlConfigs); err != nil {
@@ -219,113 +252,180 @@ func rebootMachine() {
 }
 
 func showMenu() {
-	fmt.Println("选择要执行的功能:")
 	fmt.Println("1. 关闭 SELinux")
 	fmt.Println("2. 配置时间服务器")
 	fmt.Println("3. 系统参数优化")
 	fmt.Println("4. 基础网络配置")
 	fmt.Println("5. 禁止 root 直接登录")
-	fmt.Println("6. 输出机器各种配置信息")
-	fmt.Println("7. 退出")
-}
-
-func interactiveMenu() {
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		showMenu()
-		fmt.Print("请输入选项: ")
-		option, _ := reader.ReadString('\n')
-		option = strings.TrimSpace(option)
-
-		switch option {
-		case "1":
-			disableSELinux()
-		case "2":
-			configTimeServer()
-		case "3":
-			optimizeSysParams()
-		case "4":
-			configureNetwork()
-		case "5":
-			disableRootLogin()
-		case "6":
-			outputSystemInfo()
-		case "7":
-			log.Println("退出程序")
-		default:
-			log.Println("无效的选项，请重试")
-			continue
-		}
-		if option == "1" || option == "3" || option == "4" {
-			rebootMachine()
-		}
-		return
-	}
 }
 
 func execCommand(cmd string) (string, error) {
 	command := exec.Command("bash", "-c", cmd)
 	output, err := command.CombinedOutput()
 	if err != nil {
-		return "", err
+		return string(output), err
 	}
 	return string(output), nil
 }
 
+func subnetMaskToCIDR(netmask string) int {
+	parts := strings.Split(netmask, ".")
+	var cidr int
+	for _, part := range parts {
+		val := 0
+		_, _ = fmt.Sscanf(part, "%d", &val)
+		for i := 7; i >= 0; i-- {
+			if (val>>i)&1 == 1 {
+				cidr++
+			}
+		}
+	}
+	return cidr
+}
+
+func getInterfaceNames() (interfaces []string) {
+	output, err := execCommand("ip link show | awk -F': ' '/^[0-9]+: /{print $2}'")
+	if err != nil {
+		log.Fatalf("获取网卡名称失败: %s", output)
+	}
+
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		iFaceName := strings.TrimSpace(line)
+		if iFaceName != "lo" && iFaceName != "docker0" && iFaceName != "" {
+			interfaces = append(interfaces, iFaceName)
+		}
+	}
+	return interfaces
+}
+
+func initSelfNetwork() {
+	configContent := `network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens5f1:
+      dhcp4: no
+      addresses:
+        - 192.168.1.100/24
+      routes:
+        - to: 192.168.1.0/24
+`
+	configFile := fmt.Sprintf("/etc/netplan/%s.yaml", "ens5f1")
+	_ = os.WriteFile(configFile, []byte(configContent), 0644)
+}
+
 func configureNetwork() {
 	reader := bufio.NewReader(os.Stdin)
+	var ip, netmask, gateway, selectedInterface string
+	ipRegex := regexp.MustCompile(`^([0-9]{1,3}\.){3}[0-9]{1,3}$`)
 
-	log.Print("请输入IP地址 (例如 192.168.1.100): ")
-	ip, _ := reader.ReadString('\n')
-	ip = strings.TrimSpace(ip)
+	interfaces := getInterfaceNames()
+	for {
+		for num, name := range interfaces {
+			fmt.Printf("%d. %s\n", num, name)
+		}
+		fmt.Printf("请选择一个网卡名称，用来配置网络，输入序号: ")
+		serial, _ := reader.ReadString('\n')
+		serial = strings.TrimSpace(serial)
+		index, err := strconv.Atoi(serial)
+		if err != nil || index < 0 || index >= len(interfaces) {
+			fmt.Println("无效的序号，请重新输入.")
+			continue
+		}
+		selectedInterface = interfaces[index]
+		break
+	}
 
-	log.Print("请输入子网掩码 (例如 255.255.255.0): ")
-	netmask, _ := reader.ReadString('\n')
-	netmask = strings.TrimSpace(netmask)
+	for {
+		fmt.Print("请输入IP地址 (例如 192.168.1.100): ")
+		ip, _ = reader.ReadString('\n')
+		ip = strings.TrimSpace(ip)
+		if !ipRegex.MatchString(ip) {
+			fmt.Println("IP 地址不合法!")
+		} else {
+			break
+		}
+	}
 
-	log.Print("请输入网关 (例如 192.168.1.1): ")
-	gateway, _ := reader.ReadString('\n')
-	gateway = strings.TrimSpace(gateway)
+	for {
+		fmt.Print("请输入子网掩码 (例如 255.255.255.0): ")
+		netmask, _ = reader.ReadString('\n')
+		netmask = strings.TrimSpace(netmask)
+		if !ipRegex.MatchString(netmask) {
+			fmt.Println("子网掩码地址不合法!")
+		} else {
+			break
+		}
+	}
 
-	log.Print("请输入DNS (例如 8.8.8.8): ")
+	for {
+		fmt.Print("请输入网关 (例如 192.168.1.1): ")
+		gateway, _ = reader.ReadString('\n')
+		gateway = strings.TrimSpace(gateway)
+		if gateway == "" {
+			break
+		}
+		if !ipRegex.MatchString(gateway) {
+			fmt.Println("网关地址不合法!")
+		} else {
+			if _, err := checkGatewayConnectivity(gateway); err != nil {
+				continue
+			}
+			break
+		}
+	}
+
+	fmt.Print("请输入 DNS (例如 8.8.8.8)，多个用逗号隔开: ")
 	dns, _ := reader.ReadString('\n')
 	dns = strings.TrimSpace(dns)
+	dnsAddresses := strings.Split(dns, ",")
 
-	output, err := execCommand(
-		fmt.Sprintf("nmcli con mod 'System eth0' ipv4.addresses %s/%s", ip, netmaskToCIDR(netmask)),
-	)
-	if err != nil {
-		log.Fatalf("配置 IP 失败: %s", output)
+	cidrBits := subnetMaskToCIDR(netmask)
+
+	configFile := fmt.Sprintf("/etc/netplan/%s.yaml", selectedInterface)
+	configContent := fmt.Sprintf(`network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    %s:
+      dhcp4: no
+      addresses:
+        - %s/%d
+      routes:
+        - to: 0.0.0.0/0
+          via: %s
+      nameservers:
+        addresses:
+`, selectedInterface, ip, cidrBits, gateway)
+
+	for _, dns = range dnsAddresses {
+		configContent += fmt.Sprintf("          - %s\n", strings.TrimSpace(dns))
 	}
-	output, err = execCommand(fmt.Sprintf("nmcli con mod 'System eth0' ipv4.gateway %s", gateway))
-	if err != nil {
-		log.Fatalf("配置网关失败: %s", output)
+	_ = os.WriteFile(configFile, []byte(configContent), 0644)
+
+	if output, err := execCommand("netplan apply"); err != nil {
+		log.Fatalf("网络配置错误: %s", output)
 	}
-	output, err = execCommand(fmt.Sprintf("nmcli con mod 'System eth0' ipv4.dns %s", dns))
-	if err != nil {
-		log.Fatalf("配置 DNS 失败: %s", output)
-	}
-	output, err = execCommand("nmcli con up 'System eth0'")
-	if err != nil {
-		log.Fatalf("启动网卡失败: %s", output)
+	if output, err := checkLocalLoopBack(); err != nil {
+		log.Fatalf(output)
 	}
 	log.Printf("%s\n%s%s\n", Green, "基础网络配置已完成", Reset)
 }
 
-func netmaskToCIDR(netmask string) string {
-	mask := strings.Split(netmask, ".")
-	bits := 0
-	for _, m := range mask {
-		v := toBinaryString(m)
-		bits += strings.Count(v, "1")
+func checkLocalLoopBack() (string, error) {
+	if _, err := execCommand("ping -c 4 127.0.0.1"); err != nil {
+		return "本地回环地址 127.0.0.1 不可达，请检查本地网络配置", err
 	}
-	return fmt.Sprintf("%d", bits)
+	return "", nil
 }
 
-func toBinaryString(n string) string {
-	num, _ := exec.Command("bash", "-c", fmt.Sprintf("echo %s | awk '{ printf \"%%08d\", strtonum(\"%s\") }'", n, n)).Output()
-	return strings.TrimSpace(string(num))
+func checkGatewayConnectivity(gateway string) (string, error) {
+	fmt.Println("检查网关地址的可连接性")
+	if _, err := execCommand(fmt.Sprintf("ping -c 4 %s", gateway)); err != nil {
+		return "网关配置无效，请检查", err
+	}
+	return "", nil
 }
 
 func disableRootLogin() {
@@ -344,36 +444,41 @@ func outputSystemInfo() {
 	var output string
 	commands := map[string]string{
 		"主机名和状态":       "hostnamectl",
+		"CPU 信息":       "echo \"核心数: $(nproc)\"; grep \"model name\" /proc/cpuinfo | head -n 1 | awk -F: '{print \"型号: \"$2}'",
+		"内存大小":         "fgrep MemTotal /proc/meminfo | awk '{printf \"%.2f GB\\n\", $2/1024/1024}'",
+		"磁盘状态":         "df -h / /data 2>/dev/null",
+		"防火墙状态":        "ufw status",
+		"OpenSSL 版本":   "openssl version -v | awk '{print $2}'",
+		"OpenSSH 版本":   "ssh -V 2>&1 | awk '{print $4}'",
 		"网络接口信息":       "ip -o -f inet addr show | awk '{print $2, $4, $5}'",
-		"DNS 配置":       "grep -v '^#' /etc/resolv.conf",
+		"DNS 配置":       "grep nameserver /etc/resolv.conf",
 		"文件描述符限制":      "sysctl -a | grep fs.file-max",
-		"是否允许 root 登录": "grep -i '^PermitRootLogin' /etc/ssh/sshd_config | awk '{print $2}' | grep -q 'yes' && echo \"是\" || (grep -q '^#PermitRootLogin' /etc/ssh/sshd_config && echo \"是\" || echo \"否\")",
+		"是否允许 root 登录": "grep -E '^PermitRootLogin' /etc/ssh/sshd_config | awk '{print $2}' | { read result; [[ \"$result\" = \"no\" || \"$result\" = \"prohibit-password\" ]] && echo \"是\" || echo \"否\"; }",
 	}
-	fmt.Println(Green + "========== 系统信息 ==========" + Reset)
+	fmt.Println(BrightYellow + "=================== 系统信息 ===================" + Reset)
 	for desc, cmd := range commands {
-		output, _ = execCommand(cmd)
 		fmt.Println(strings.Repeat("-", 60))
+		fmt.Printf("%s%s%s:\n", TitleColor, desc, Reset)
+		output, _ = execCommand(cmd)
 		if desc == "网络接口信息" {
-			printNetworkInfo(output)
-		} else {
-			fmt.Printf("%s%s:\n%s%s\n", Cyan, desc, output, Reset)
+			output = getNetworkInfo(output)
 		}
+		fmt.Println(output)
 	}
-	fmt.Println(Green + "=============================" + Reset)
+	fmt.Println(BrightYellow + "============================================" + Reset)
 }
 
-func printNetworkInfo(output string) {
+func getNetworkInfo(output string) string {
+	var result string
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	fmt.Printf("%s网络接口信息:\n", Cyan)
-	fmt.Printf("%s%-20s %-20s %-20s%s\n", Cyan, "接口", "IP 地址", "状态", Reset)
+	result += fmt.Sprintf("%-20s %-20s %-20s\n", "接口", "IP 地址", "状态")
 	for _, line := range lines {
 		parts := strings.Fields(line)
-		if len(parts) >= 3 {
-			fmt.Printf("%s%-20s %-20s %-20s%s\n",
-				Cyan, parts[0],
-				parts[1],
-				parts[2],
-				Reset)
+		if len(parts) >= 3 && parts[0] != "lo" {
+			result += fmt.Sprintf(
+				"%-20s %-20s %-20s\n", parts[0], parts[1], parts[2],
+			)
 		}
 	}
+	return result
 }

@@ -441,29 +441,67 @@ func disableRootLogin() {
 }
 
 func outputSystemInfo() {
-	var output string
-	commands := map[string]string{
-		"主机名和状态":       "hostnamectl",
-		"CPU 信息":       "echo \"核心数: $(nproc)\"; grep \"model name\" /proc/cpuinfo | head -n 1 | awk -F: '{print \"型号: \"$2}'",
-		"内存大小":         "fgrep MemTotal /proc/meminfo | awk '{printf \"%.2f GB\\n\", $2/1024/1024}'",
-		"磁盘状态":         "df -h / /data 2>/dev/null",
-		"防火墙状态":        "ufw status",
-		"OpenSSL 版本":   "openssl version -v | awk '{print $2}'",
-		"OpenSSH 版本":   "ssh -V 2>&1 | awk '{print $4}'",
-		"网络接口信息":       "ip -o -f inet addr show | awk '{print $2, $4, $5}'",
-		"DNS 配置":       "grep nameserver /etc/resolv.conf",
-		"文件描述符限制":      "sysctl -a | grep fs.file-max",
-		"是否允许 root 登录": "grep -E '^PermitRootLogin' /etc/ssh/sshd_config | awk '{print $2}' | { read result; [[ \"$result\" = \"no\" || \"$result\" = \"prohibit-password\" ]] && echo \"是\" || echo \"否\"; }",
+	var output, suffix string
+	commands := map[string]map[string]string{
+		"主机名和状态": {
+			"cmd":       "hostnamectl",
+			"linebreak": "1",
+		},
+		"CPU 信息": {
+			"cmd":       "echo \"核心数: $(nproc)\"; grep \"model name\" /proc/cpuinfo | head -n 1 | awk -F: '{print \"型号: \"$2}'",
+			"linebreak": "1",
+		},
+		"内存大小": {
+			"cmd":       "fgrep MemTotal /proc/meminfo | awk '{printf \"%.2f GB\\n\", $2/1024/1024}'",
+			"linebreak": "1",
+		},
+		"磁盘状态": {
+			"cmd":       "df -h / /data 2>/dev/null",
+			"linebreak": "1",
+		},
+		"防火墙状态": {
+			"cmd":       "ufw status",
+			"linebreak": "0",
+		},
+		"OpenSSL 版本": {
+			"cmd":       "openssl version -v | awk '{print $2}'",
+			"linebreak": "0",
+		},
+		"OpenSSH 版本": {
+			"cmd":       "ssh -V 2>&1 | awk '{print $4}'",
+			"linebreak": "0",
+		},
+		"网络接口信息": {
+			"cmd":       "ip -o -f inet addr show | awk '{print $2, $4, $5}'",
+			"linebreak": "1",
+		},
+		"DNS 配置": {
+			"cmd":       "grep nameserver /etc/resolv.conf",
+			"linebreak": "1",
+		},
+		"文件描述符限制": {
+			"cmd":       "sysctl -a | grep fs.file-max",
+			"linebreak": "0",
+		},
+		"是否允许 root 登录": {
+			"cmd":       "grep -E '^PermitRootLogin' /etc/ssh/sshd_config | awk '{print $2}' | { read result; [[ \"$result\" = \"no\" || \"$result\" = \"prohibit-password\" ]] && echo \"是\" || echo \"否\"; }",
+			"linebreak": "0",
+		},
 	}
 	fmt.Println(BrightYellow + "=================== 系统信息 ===================" + Reset)
-	for desc, cmd := range commands {
+	for desc, item := range commands {
 		fmt.Println(strings.Repeat("-", 60))
-		fmt.Printf("%s%s%s:\n", TitleColor, desc, Reset)
-		output, _ = execCommand(cmd)
+		if item["linebreak"] == "1" {
+			suffix = "\n"
+		} else {
+			suffix = " "
+		}
+		fmt.Printf("%s%s%s:%s", TitleColor, desc, Reset, suffix)
+		output, _ = execCommand(item["cmd"])
 		if desc == "网络接口信息" {
 			output = getNetworkInfo(output)
 		}
-		fmt.Println(output)
+		fmt.Print(output)
 	}
 	fmt.Println(BrightYellow + "============================================" + Reset)
 }

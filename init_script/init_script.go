@@ -27,13 +27,13 @@ func main() {
 	showHelp := flag.Bool("m", false, "显示菜单信息")
 	allDo := flag.Bool("a", false, "是否执行全部任务")
 	initNetwork := flag.Bool("i", false, "初始化私网信息")
-	test := flag.Bool("t", false, "Test")
+	//test := flag.Bool("t", false, "Test")
 	flag.Parse()
 
-	if *test {
-		outputSystemInfo()
-		return
-	}
+	//if *test {
+	//	outputSystemInfo()
+	//	return
+	//}
 
 	if *initNetwork {
 		initSelfNetwork()

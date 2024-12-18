@@ -1,1 +1,1 @@
-GOOS=linux GOARCH=amd64 go build project -o script_name
+GOOS=linux GOARCH=amd64 go build -o script_name project 

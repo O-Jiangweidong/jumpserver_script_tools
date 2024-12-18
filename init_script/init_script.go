@@ -18,8 +18,9 @@ const (
 	BrightCyan   = "\033[1;36m"
 	BrightYellow = "\033[1;33m"
 
-	DefaultNTPServer = "asia.pool.ntp.org"
-	TitleColor       = BrightCyan
+	DefaultNTPServer  = "asia.pool.ntp.org"
+	DefaultSubnetMask = "255.255.255.0"
+	TitleColor        = BrightCyan
 )
 
 func main() {
@@ -352,6 +353,9 @@ func configureNetwork() {
 		fmt.Print("Please enter the subnet mask (e.g., 255.255.255.0): ")
 		netmask, _ = reader.ReadString('\n')
 		netmask = strings.TrimSpace(netmask)
+		if netmask == "" {
+			netmask = DefaultSubnetMask
+		}
 		if !ipRegex.MatchString(netmask) {
 			fmt.Println("Invalid subnet mask!")
 		} else {

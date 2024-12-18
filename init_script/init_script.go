@@ -350,7 +350,7 @@ func configureNetwork() {
 	}
 
 	for {
-		fmt.Print("Please enter the subnet mask (e.g., 255.255.255.0): ")
+		fmt.Printf("Please enter the subnet mask, default: %s: ", DefaultSubnetMask)
 		netmask, _ = reader.ReadString('\n')
 		netmask = strings.TrimSpace(netmask)
 		if netmask == "" {

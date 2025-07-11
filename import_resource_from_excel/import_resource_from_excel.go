@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	urlParse "net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -59,12 +60,13 @@ func (jms *JumpServer) getHeaders() map[string]string {
 }
 
 func (jms *JumpServer) doRequest(method, url string, body interface{}) (*http.Response, error) {
-	if !strings.HasPrefix(url, jms.endpoint) {
-		url = jms.endpoint + url
+	parsedUrl, err := urlParse.Parse(url)
+	if err != nil {
+		return nil, err
 	}
+	url = jms.endpoint + parsedUrl.Path + "?" + parsedUrl.RawQuery
 
 	var reqBody []byte
-	var err error
 	if body != nil {
 		reqBody, err = json.Marshal(body)
 		if err != nil {
@@ -1033,10 +1035,13 @@ func (h *Handler) MigrateAccount() {
 			log.Printf("[WARNING] 资产 %s 未找到，账号 %s 跳过创建", row[0], row[4])
 			continue
 		}
+		secret := ""
+		if len(row) >= 6 {
+			secret = row[5]
+		}
 		jmsAccount := JmsAccount{
 			Name: row[4], Username: row[4],
-			Asset:      assetId,
-			SecretType: "password", Secret: row[5],
+			Asset: assetId, SecretType: "password", Secret: secret,
 		}
 		if err = h.jmsClient.CreateAccount(jmsAccount); err != nil {
 			log.Printf("[ERROR] [账号: %s] 创建失败: %v", jmsAccount.Name, err)

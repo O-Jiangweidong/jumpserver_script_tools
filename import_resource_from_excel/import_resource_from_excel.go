@@ -164,15 +164,24 @@ func (jms *JumpServer) Patch(url string, obj interface{}) error {
 }
 
 type User struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Username    string   `json:"username"`
-	Email       string   `json:"email"`
-	Source      string   `json:"source"`
-	Comment     string   `json:"comment"`
-	Groups      []string `json:"groups"`
-	OrgRoles    []string `json:"org_roles"`
-	SystemRoles []string `json:"system_roles"`
+	ID               string   `json:"id,omitempty"`
+	Name             string   `json:"name"`
+	Username         string   `json:"username"`
+	Email            string   `json:"email"`
+	Password         string   `json:"password,omitempty"`
+	PasswordStrategy string   `json:"password_strategy"`
+	Source           string   `json:"source"`
+	Comment          string   `json:"comment"`
+	Groups           []string `json:"groups"`
+	OrgRoles         []string `json:"org_roles"`
+	SystemRoles      []string `json:"system_roles"`
+}
+
+func (u *User) SetPassword(value string) {
+	if u.Source == "local" {
+		u.Password = value
+		u.PasswordStrategy = "custom"
+	}
 }
 
 type UserResponse struct {
@@ -200,6 +209,14 @@ func (jms *JumpServer) ListUsers() ([]User, error) {
 func (jms *JumpServer) CreateUser(user User) error {
 	url := "/api/v1/users/users/"
 	if err := jms.Post(url, user); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (jms *JumpServer) UpdateUser(id string, user User) error {
+	url := fmt.Sprintf("/api/v1/users/users/%s/", id)
+	if err := jms.Put(url, user); err != nil {
 		return err
 	}
 	return nil
@@ -476,7 +493,7 @@ func (jms *JumpServer) NodeAddAssets(nodeId string, assetIds []string) error {
 }
 
 type Permission struct {
-	ID        string   `json:"id"`
+	ID        string   `json:"id,omitempty"`
 	Name      string   `json:"name"`
 	Accounts  []string `json:"accounts"`
 	Actions   []string `json:"actions"`
@@ -497,14 +514,17 @@ func (p *Permission) mergeAccounts(accountName string) {
 func (p *Permission) mergeProtocols(value string) {
 	set := make(map[string]struct{})
 	for _, p1 := range p.Protocols {
-		set[p1] = struct{}{}
+		set[strings.ToLower(p1)] = struct{}{}
 	}
 
 	for _, p2 := range strings.Split(value, ",") {
-		set[p2] = struct{}{}
+		set[strings.ToLower(p2)] = struct{}{}
 	}
 	result := make([]string, 0, len(set))
 	for item := range set {
+		if item == "ftp" || item == "scp" {
+			continue
+		}
 		result = append(result, item)
 	}
 	p.Protocols = result
@@ -535,6 +555,14 @@ func (jms *JumpServer) ListPerms() ([]Permission, error) {
 func (jms *JumpServer) CreatePerm(perm Permission) error {
 	url := "/api/v1/perms/asset-permissions/"
 	if err := jms.Post(url, perm); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (jms *JumpServer) UpdatePerm(id string, perm Permission) error {
+	url := fmt.Sprintf("/api/v1/perms/asset-permissions/%s/", id)
+	if err := jms.Put(url, perm); err != nil {
 		return err
 	}
 	return nil
@@ -647,6 +675,18 @@ func (h *Handler) MigrateUser() {
 	var globalUserMap = make(map[string]string)
 	rawOrgId := h.jmsClient.GetOrgId()
 	h.jmsClient.SetOrg(GlobalOrgID)
+
+	var periods []IDValue
+	for i := 0; i <= 6; i++ {
+		periods = append(periods, IDValue{ID: i, Value: AllDay})
+	}
+	gLoginAcl := LoginACL{
+		Name: "DENY_ALL", Priority: 80, Action: "reject",
+		Rules: &ACLRule{IpGroup: []string{"*"}, Period: periods},
+		Users: ACLUser{Type: "all"},
+	}
+	_ = h.jmsClient.CreateLoginACL(gLoginAcl)
+
 	globalUsers, err := h.jmsClient.ListUsers()
 	if err != nil {
 		log.Fatalf("[ERROR] 在全局视图下获取用户失败")
@@ -656,10 +696,6 @@ func (h *Handler) MigrateUser() {
 	}
 	h.jmsClient.SetOrg(rawOrgId)
 
-	var periods []IDValue
-	for i := 0; i <= 6; i++ {
-		periods = append(periods, IDValue{ID: i, Value: AllDay})
-	}
 	for _, row := range rows[h.config.User.HeaderRowNum+1:] {
 		source := "local"
 		if row[1] != "" {
@@ -704,10 +740,12 @@ func (h *Handler) MigrateUser() {
 		jmsUser := User{
 			Name: user.Name, Username: user.Username,
 			Email: email, Source: user.Source,
-			Comment: user.Comment, Groups: groupIds,
+			PasswordStrategy: "email",
+			Comment:          user.Comment, Groups: groupIds,
 			SystemRoles: []string{SystemUser},
 			OrgRoles:    []string{OrgUser},
 		}
+		jmsUser.SetPassword("jumpserver123")
 		if userId == "" {
 			userId = uuid.New().String()
 			jmsUser.ID = userId
@@ -731,6 +769,13 @@ func (h *Handler) MigrateUser() {
 				log.Printf("[INFO] [用户: %s(%s)] 邀请成功\n", user.Name, user.Username)
 				h.userMap[fmt.Sprintf("%s(%s)", user.Username, user.Name)] = userId
 				h.usernameMap[user.Username] = userId
+			}
+		} else {
+			if err = h.jmsClient.UpdateUser(orgUserId, jmsUser); err != nil {
+				log.Printf("[ERROR] [用户: %s(%s)] 更新失败：%v\n", user.Name, user.Username, err)
+				continue
+			} else {
+				log.Printf("[INFO] [用户: %s(%s)] 更新成功\n", user.Name, user.Username)
 			}
 		}
 
@@ -873,10 +918,11 @@ func (i *EAsset) FitProtocols(protocolStr string) {
 		if err != nil {
 			continue
 		}
-		protocols = append(protocols, Protocol{
-			Name: strings.ToLower(parts[0]),
-			Port: port,
-		})
+		protocolName := strings.ToLower(parts[0])
+		if protocolName == "scp" || protocolName == "ftp" {
+			continue
+		}
+		protocols = append(protocols, Protocol{Name: protocolName, Port: port})
 	}
 	i.Protocols = protocols
 }
@@ -970,12 +1016,11 @@ func (h *Handler) MigrateAsset() {
 				h.assetMap[asset.Name] = jmsAsset.ID
 			}
 		} else {
-			log.Printf("[INFO] 资产: %s 已经存在，跳过", asset.Name)
-			//if err = h.jmsClient.UpdateAsset(assetId, category, jmsAsset); err != nil {
-			//	log.Printf("[ERROR] [资产: %s]更新失败: %v\n", asset.Name, err)
-			//} else {
-			//	log.Printf("[INFO] [资产: %s] 更新成功\n", asset.Name)
-			//}
+			if err = h.jmsClient.UpdateAsset(assetId, category, jmsAsset); err != nil {
+				log.Printf("[ERROR] [资产: %s]更新失败: %v\n", asset.Name, err)
+			} else {
+				log.Printf("[INFO] [资产: %s] 更新成功\n", asset.Name)
+			}
 		}
 	}
 }
@@ -1153,11 +1198,6 @@ func (h *Handler) MigratePermission() {
 	// username, asset_name, asset_category, asset_ip, support_protocols, account, account_protocols, db_name
 	for _, row := range rows[config.HeaderRowNum+1:] {
 		name := fmt.Sprintf("%s-%s", row[1], row[0])
-		permId := h.permMap[name]
-		if permId != "" {
-			log.Printf("[WARNING] 资产授权 %s 已存在，跳过\n", name)
-			continue
-		}
 		userId := h.usernameMap[row[0]]
 		if userId == "" {
 			log.Printf("[WARNING] 用户 %s 在 JumpServer 不存在，跳过\n", row[0])
@@ -1180,20 +1220,37 @@ func (h *Handler) MigratePermission() {
 				Users:     []User{{ID: userId}},
 				Assets:    []string{assetId},
 				Accounts:  []string{"@SPEC", row[5]},
-				Protocols: strings.Split(row[6], ","),
+				Protocols: []string{},
 				Actions: []string{
 					"connect", "upload", "download", "copy", "paste", "delete", "share",
 				},
+			}
+			for _, p := range strings.Split(row[6], ",") {
+				p = strings.ToLower(p)
+				if p == "ftp" || p == "scp" {
+					continue
+				}
+				jmsPerm.Protocols = append(jmsPerm.Protocols, p)
 			}
 			permissionsMap[name] = jmsPerm
 		}
 
 	}
 	for _, perm := range permissionsMap {
-		if err = h.jmsClient.CreatePerm(perm); err != nil {
-			log.Printf("[ERROR] [资产授权: %s] 创建失败: %v", perm.Name, err)
+		permId := h.permMap[perm.Name]
+		if permId != "" {
+			perm.ID = ""
+			if err = h.jmsClient.UpdatePerm(permId, perm); err != nil {
+				log.Printf("[ERROR] [资产授权: %s] 更新失败: %v", perm.Name, err)
+			} else {
+				log.Printf("[INFO] [资产授权: %s] 更新成功", perm.Name)
+			}
 		} else {
-			log.Printf("[INFO] [资产授权: %s] 创建成功", perm.Name)
+			if err = h.jmsClient.CreatePerm(perm); err != nil {
+				log.Printf("[ERROR] [资产授权: %s] 创建失败: %v", perm.Name, err)
+			} else {
+				log.Printf("[INFO] [资产授权: %s] 创建成功", perm.Name)
+			}
 		}
 	}
 }

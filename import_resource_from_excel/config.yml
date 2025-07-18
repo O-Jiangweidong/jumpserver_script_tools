@@ -4,27 +4,27 @@ User:
   HeaderRowNum: 6
 
 UserGroup:
-  Path: "import_resource_from_excel/files/groups.xlsx"
+#  Path: "import_resource_from_excel/files/groups.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
 Asset:
-  Path: "import_resource_from_excel/files/assets.xlsx"
+#  Path: "import_resource_from_excel/files/assets.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 7
 
 Account:
-  Path: "import_resource_from_excel/files/accounts.xlsx"
+#  Path: "import_resource_from_excel/files/accounts.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 7
 
 Node:
-  Path: "import_resource_from_excel/files/nodes.xlsx"
+#  Path: "import_resource_from_excel/files/nodes.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
 Permission:
-  Path: "import_resource_from_excel/files/permissions.xlsx"
+#  Path: "import_resource_from_excel/files/permissions.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
@@ -33,5 +33,5 @@ JumpServer:
   # Token 获取方式: https://docs.jumpserver.org/zh/v4/dev/rest_api/#2-api -> Private Token
   Token: "09c4264f8d9f58ff596b106fd0bec251ac0c5e49"
   # 不填默认为 Default 组织
-  OrgId: "f43188dc-9239-4047-b95d-7c17a543b5c6"
+  OrgId: "c72ff500-61b3-4c17-890e-2023208932b3"
 

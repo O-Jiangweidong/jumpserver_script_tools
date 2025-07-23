@@ -1,30 +1,30 @@
 User:
-  Path: "import_resource_from_excel/files/users.xlsx"
+  Path: "import_jms_from_qz_excel/files/users.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
-  HeaderRowNum: 6
+  HeaderRowNum: 1
 
 UserGroup:
-#  Path: "import_resource_from_excel/files/groups.xlsx"
+  Path: "import_jms_from_qz_excel/files/groups.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
 Asset:
-#  Path: "import_resource_from_excel/files/assets.xlsx"
+  Path: "import_jms_from_qz_excel/files/assets.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
-  HeaderRowNum: 7
+  HeaderRowNum: 1
 
 Account:
-#  Path: "import_resource_from_excel/files/accounts.xlsx"
+  Path: "import_jms_from_qz_excel/files/accounts.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
-  HeaderRowNum: 7
+  HeaderRowNum: 1
 
 Node:
-#  Path: "import_resource_from_excel/files/nodes.xlsx"
+  Path: "import_jms_from_qz_excel/files/nodes.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
 Permission:
-#  Path: "import_resource_from_excel/files/permissions.xlsx"
+  Path: "import_jms_from_qz_excel/files/permissions.xlsx"
   # 从 1 开始数数，数据从 HeaderRowNum + 1 行读取
   HeaderRowNum: 1
 
@@ -33,5 +33,8 @@ JumpServer:
   # Token 获取方式: https://docs.jumpserver.org/zh/v4/dev/rest_api/#2-api -> Private Token
   Token: "09c4264f8d9f58ff596b106fd0bec251ac0c5e49"
   # 不填默认为 Default 组织
-  OrgId: "c72ff500-61b3-4c17-890e-2023208932b3"
-
+  OrgId: "02d43e43-6851-4d01-90cf-589fb63d53e5"
+  # 本地用户默认设置的密码
+  DefaultPassword: "jumpserver123"
+  # ACL 禁用是否包含 admin 用户
+  ACLLoginDenyIncludeAdmin: true

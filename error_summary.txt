@@ -1,0 +1,648 @@
+❌ 错误摘要
+----------------------------------------
+
+【账号】(244个错误)
+  1. 资产 'SPR-oracle' 未找到，'sys' 跳过创建
+  2. 资产 'SPR-oracle' 未找到，'scr' 跳过创建
+  3. 资产 'MySQL' 未找到，'root' 跳过创建
+  4. 'administrator' 创建失败: POST 请求失败，响应：["Account already exists"]
+  5. 资产 '问题管理平台数据库' 未找到，'root' 跳过创建
+  6. 资产 '10.96.65.18-mysql' 未找到，'root' 跳过创建
+  7. 资产 '10.96.65.19-mysql' 未找到，'root' 跳过创建
+  8. 资产 '办公内网核心交换机1' 未找到，'network' 跳过创建
+  9. 资产 '办公内网核心交换机2' 未找到，'network' 跳过创建
+  10. 资产 '生产区APP层核心交换机' 未找到，'network' 跳过创建
+  11. 资产 '生产区核心层核心交换机' 未找到，'network' 跳过创建
+  12. 资产 '生产区央库互联交换机' 未找到，'network' 跳过创建
+  13. 资产 '网上业务区app交换机' 未找到，'network' 跳过创建
+  14. 资产 '网上业务区DB交换机' 未找到，'network' 跳过创建
+  15. 资产 '证联网区核心交换机' 未找到，'network' 跳过创建
+  16. 资产 'OA区核心交换机1' 未找到，'network' 跳过创建
+  17. 资产 'OA区核心交换机2' 未找到，'network' 跳过创建
+  18. 资产 '证联网客户端服务器10.98.64.46' 未找到，'administrator' 跳过创建
+  19. 资产 'Sw_12804_IDC_HX' 未找到，'network' 跳过创建
+  20. 资产 'Sw_12804_IDC_HX' 未找到，'monitor' 跳过创建
+  21. 资产 'Sw_6810_IDC_SC_HX' 未找到，'network' 跳过创建
+  22. 资产 'Sw_6810_IDC_SC_HX' 未找到，'monitor' 跳过创建
+  23. 资产 'JY-SW6855-SC-HX' 未找到，'network' 跳过创建
+  24. 资产 'JY-SW6855-SC-HX' 未找到，'monitor' 跳过创建
+  25. 资产 'Sw_SC_APP_JR_01' 未找到，'network' 跳过创建
+  26. 资产 'Sw_SC_APP_JR_01' 未找到，'monitor' 跳过创建
+  27. 资产 'Sw_SC_APP_JR_02' 未找到，'network' 跳过创建
+  28. 资产 'Sw_SC_APP_JR_02' 未找到，'monitor' 跳过创建
+  29. 资产 'Sw_SC_APP_JR_03' 未找到，'network' 跳过创建
+  30. 资产 'Sw_SC_APP_JR_03' 未找到，'monitor' 跳过创建
+  31. 资产 'Sw_SC_APP_JR_04' 未找到，'monitor' 跳过创建
+  32. 资产 'Sw_SC_APP_JR_04' 未找到，'network' 跳过创建
+  33. 资产 'Sw_SC_APP_JR_05' 未找到，'network' 跳过创建
+  34. 资产 'Sw_SC_APP_JR_05' 未找到，'monitor' 跳过创建
+  35. 资产 'Sw_SC_APP_JR_06' 未找到，'network' 跳过创建
+  36. 资产 'Sw_SC_APP_JR_06' 未找到，'monitor' 跳过创建
+  37. 资产 'JY-Sw-6851-DSJ-01' 未找到，'monitor' 跳过创建
+  38. 资产 'JY-Sw-6851-DSJ-01' 未找到，'network' 跳过创建
+  39. 资产 'JY-Sw-6851-DSJ-02' 未找到，'network' 跳过创建
+  40. 资产 'JY-Sw-6851-DSJ-02' 未找到，'monitor' 跳过创建
+  41. 资产 'JY-Sw-6851-DSJ-03' 未找到，'monitor' 跳过创建
+  42. 资产 'JY-Sw-6851-DSJ-03' 未找到，'network' 跳过创建
+  43. 资产 'JY-Sw-6851-DSJ-04' 未找到，'monitor' 跳过创建
+  44. 资产 'JY-Sw-6851-DSJ-04' 未找到，'network' 跳过创建
+  45. 资产 'JY_Sw_SC_JR_01' 未找到，'monitor' 跳过创建
+  46. 资产 'JY_Sw_SC_JR_01' 未找到，'network' 跳过创建
+  47. 资产 'JY_Sw_SC_JR_02' 未找到，'network' 跳过创建
+  48. 资产 'JY_Sw_SC_JR_02' 未找到，'monitor' 跳过创建
+  49. 资产 'JY_Sw_SC_JR_03' 未找到，'network' 跳过创建
+  50. 资产 'JY_Sw_SC_JR_03' 未找到，'monitor' 跳过创建
+  51. 资产 'JY_Sw_SC_JR_04' 未找到，'monitor' 跳过创建
+  52. 资产 'JY_Sw_SC_JR_04' 未找到，'network' 跳过创建
+  53. 资产 'Sw-5810-IDC_ZLW_HX' 未找到，'monitor' 跳过创建
+  54. 资产 'Sw-5810-IDC_ZLW_HX' 未找到，'network' 跳过创建
+  55. 资产 'Sw_ZLW_sansuo_HX' 未找到，'monitor' 跳过创建
+  56. 资产 'Sw_ZLW_sansuo_HX' 未找到，'network' 跳过创建
+  57. 资产 'Sw_ZLW_JR_01' 未找到，'monitor' 跳过创建
+  58. 资产 'Sw_ZLW_JR_01' 未找到，'network' 跳过创建
+  59. 资产 'Sw_ZLW_JR_02' 未找到，'network' 跳过创建
+  60. 资产 'Sw_ZLW_JR_02' 未找到，'monitor' 跳过创建
+  61. 资产 'Sw_HLW_DB_HX' 未找到，'network' 跳过创建
+  62. 资产 'Sw_HLW_DB_HX' 未找到，'monitor' 跳过创建
+  63. 资产 'Sw_HLW_APP_HX' 未找到，'network' 跳过创建
+  64. 资产 'Sw_HLW_APP_HX' 未找到，'monitor' 跳过创建
+  65. 资产 'Sw_HLW_APP_DB_JR' 未找到，'monitor' 跳过创建
+  66. 资产 'Sw_HLW_APP_DB_JR' 未找到，'network' 跳过创建
+  67. 资产 'Sw_YW_HX_01' 未找到，'network' 跳过创建
+  68. 资产 'Sw_YW_HX_01' 未找到，'monitor' 跳过创建
+  69. 资产 'Sw_YW_HX_02' 未找到，'monitor' 跳过创建
+  70. 资产 'Sw_YW_HX_02' 未找到，'network' 跳过创建
+  71. 资产 'Sw_KFCS_HX_01' 未找到，'monitor' 跳过创建
+  72. 资产 'Sw_KFCS_HX_01' 未找到，'network' 跳过创建
+  73. 资产 'Sw_KFCS_HX_02' 未找到，'network' 跳过创建
+  74. 资产 'Sw_KFCS_HX_02' 未找到，'monitor' 跳过创建
+  75. 资产 'Sw_KFCS_JR_01' 未找到，'monitor' 跳过创建
+  76. 资产 'Sw_KFCS_JR_01' 未找到，'network' 跳过创建
+  77. 资产 'Sw_KFCS_JR_02' 未找到，'monitor' 跳过创建
+  78. 资产 'Sw_KFCS_JR_02' 未找到，'network' 跳过创建
+  79. 资产 'Sw_KFCS_JR_03' 未找到，'network' 跳过创建
+  80. 资产 'Sw_KFCS_JR_03' 未找到，'monitor' 跳过创建
+  81. 资产 'Sw_KFCS_JR_04' 未找到，'monitor' 跳过创建
+  82. 资产 'Sw_KFCS_JR_04' 未找到，'network' 跳过创建
+  83. 资产 'Sw_5810_KFCS_Client_01' 未找到，'monitor' 跳过创建
+  84. 资产 'Sw_5810_KFCS_Client_01' 未找到，'network' 跳过创建
+  85. 资产 'Sw_5500_KFCS_Client_02' 未找到，'no' 跳过创建
+  86. 资产 'Sw-CS-DSJ-01' 未找到，'monitor' 跳过创建
+  87. 资产 'Sw-CS-DSJ-01' 未找到，'network' 跳过创建
+  88. 资产 'Sw_OA_HX_01' 未找到，'monitor' 跳过创建
+  89. 资产 'Sw_OA_HX_01' 未找到，'network' 跳过创建
+  90. 资产 'Sw_OA_HX_02' 未找到，'monitor' 跳过创建
+  91. 资产 'Sw_OA_HX_02' 未找到，'network' 跳过创建
+  92. 资产 'Sw_OA_JR_01' 未找到，'monitor' 跳过创建
+  93. 资产 'Sw_OA_JR_01' 未找到，'network' 跳过创建
+  94. 资产 'Sw_OA_JR_02' 未找到，'monitor' 跳过创建
+  95. 资产 'Sw_OA_JR_02' 未找到，'network' 跳过创建
+  96. 资产 'Sw_OA_JR_03' 未找到，'monitor' 跳过创建
+  97. 资产 'Sw_OA_JR_03' 未找到，'network' 跳过创建
+  98. 资产 'Sw_OA_JR_04' 未找到，'monitor' 跳过创建
+  99. 资产 'Sw_OA_JR_04' 未找到，'network' 跳过创建
+  100. 资产 'Sw_OA_10G_SAN' 未找到，'network' 跳过创建
+  101. 资产 'Sw_OA_10G_SAN' 未找到，'monitor' 跳过创建
+  102. 资产 'Sw_OA_SC_APP_JR' 未找到，'network' 跳过创建
+  103. 资产 'Sw_OA_SC_APP_JR' 未找到，'monitor' 跳过创建
+  104. 资产 'Sw-5720-JY_BGNW_HX_1' 未找到，'network' 跳过创建
+  105. 资产 'Sw-5720-JY_BGNW_HX_1' 未找到，'monitor' 跳过创建
+  106. 资产 'Sw-5720-JY_BGNW_HX_2' 未找到，'network' 跳过创建
+  107. 资产 'Sw-5720-JY_BGNW_HX_2' 未找到，'monitor' 跳过创建
+  108. 资产 'R_AR3260_IDC_ZLW_01' 未找到，'network' 跳过创建
+  109. 资产 'R_AR3260_IDC_ZLW_01' 未找到，'monitor' 跳过创建
+  110. 资产 'R_AR3260_IDC_ZLW_02' 未找到，'network' 跳过创建
+  111. 资产 'R_AR3260_IDC_ZLW_02' 未找到，'monitor' 跳过创建
+  112. 资产 'Sw-JY-HJ' 未找到，'monitor' 跳过创建
+  113. 资产 'Sw-JY-HJ' 未找到，'network' 跳过创建
+  114. 资产 'SW-HX-HJ-DX' 未找到，'network' 跳过创建
+  115. 资产 'SW-HX-HJ-DX' 未找到，'monitor' 跳过创建
+  116. 资产 'SW-HX-HJ-YD' 未找到，'network' 跳过创建
+  117. 资产 'SW-HX-HJ-YD' 未找到，'monitor' 跳过创建
+  118. 资产 'Sw_JY_NWJR_01' 未找到，'no' 跳过创建
+  119. 资产 'Sw_JY_NWJR_02' 未找到，'no' 跳过创建
+  120. 资产 'Sw_JY_NWJR_03' 未找到，'no' 跳过创建
+  121. 资产 'Sw_JY_JKS_NWJR_01' 未找到，'monitor' 跳过创建
+  122. 资产 'Sw_JY_JKS_NWJR_01' 未找到，'network' 跳过创建
+  123. 资产 'Sw_JY_JKS_NWJR_02' 未找到，'network' 跳过创建
+  124. 资产 'Sw_JY_JKS_NWJR_02' 未找到，'monitor' 跳过创建
+  125. 资产 'Sw_JY_JKS_NWJR_03' 未找到，'network' 跳过创建
+  126. 资产 'Sw_JY_JKS_NWJR_03' 未找到，'monitor' 跳过创建
+  127. 资产 'Sw_JY_JKS_NWJR_04' 未找到，'network' 跳过创建
+  128. 资产 'Sw_JY_JKS_NWJR_04' 未找到，'monitor' 跳过创建
+  129. 资产 'SW-JSF-NWJR-01-A' 未找到，'no' 跳过创建
+  130. 资产 'SW-JSF-NWJR-02-A' 未找到，'no' 跳过创建
+  131. 资产 'SW-JSF-NWJR-03-A' 未找到，'no' 跳过创建
+  132. 资产 'SW-JSF-NWJR-04-B' 未找到，'no' 跳过创建
+  133. 资产 'SW-JSF-NWJR-05-B' 未找到，'no' 跳过创建
+  134. 资产 'SW-JSF-NWJR-06-B' 未找到，'no' 跳过创建
+  135. 资产 'SW-JSF-NWJR-07-C' 未找到，'no' 跳过创建
+  136. 资产 'SW-JSF-NWJR-08-C' 未找到，'no' 跳过创建
+  137. 资产 'SW-JSF-NWJR-09-C' 未找到，'no' 跳过创建
+  138. 资产 'SW-JSF-NWJR-10-C' 未找到，'no' 跳过创建
+  139. 资产 'SW-JSF-NWJR-11-D' 未找到，'no' 跳过创建
+  140. 资产 'SW-JSF-NWJR-12-D' 未找到，'no' 跳过创建
+  141. 资产 'SW-JSF-NWJR-13-D' 未找到，'no' 跳过创建
+  142. 资产 'SW-JSF-NWJR-14-D' 未找到，'no' 跳过创建
+  143. 资产 'SW-HX-NWJR-01' 未找到，'monitor' 跳过创建
+  144. 资产 'SW-HX-NWJR-01' 未找到，'network' 跳过创建
+  145. 资产 'SW-HX-NWJR-02' 未找到，'network' 跳过创建
+  146. 资产 'SW-HX-NWJR-02' 未找到，'monitor' 跳过创建
+  147. 资产 'SW-HX-NWJR-03' 未找到，'monitor' 跳过创建
+  148. 资产 'SW-HX-NWJR-03' 未找到，'network' 跳过创建
+  149. 资产 'SW-HX-NWJR-04' 未找到，'network' 跳过创建
+  150. 资产 'SW-HX-NWJR-04' 未找到，'monitor' 跳过创建
+  151. 资产 'SW-HX-NWJR-05' 未找到，'monitor' 跳过创建
+  152. 资产 'SW-HX-NWJR-05' 未找到，'network' 跳过创建
+  153. 资产 'Sw_RY_BianJie' 未找到，'network' 跳过创建
+  154. 资产 'Sw_RY_BianJie' 未找到，'monitor' 跳过创建
+  155. 资产 'Sw_RY_BGNW' 未找到，'network' 跳过创建
+  156. 资产 'Sw_RY_BGNW' 未找到，'monitor' 跳过创建
+  157. 资产 'Sw_RY_NWJR_01' 未找到，'monitor' 跳过创建
+  158. 资产 'Sw_RY_NWJR_01' 未找到，'network' 跳过创建
+  159. 资产 'Sw_RY_NWJR_02' 未找到，'monitor' 跳过创建
+  160. 资产 'Sw_RY_NWJR_02' 未找到，'network' 跳过创建
+  161. 资产 'Sw_RY_NWJR_03' 未找到，'monitor' 跳过创建
+  162. 资产 'Sw_RY_NWJR_03' 未找到，'network' 跳过创建
+  163. 资产 'Sw_RY_NWJR_04' 未找到，'network' 跳过创建
+  164. 资产 'Sw_RY_NWJR_04' 未找到，'monitor' 跳过创建
+  165. 资产 'Sw_RY_NWJR_05' 未找到，'monitor' 跳过创建
+  166. 资产 'Sw_RY_NWJR_05' 未找到，'network' 跳过创建
+  167. 资产 'Sw_RY_NWJR_06' 未找到，'network' 跳过创建
+  168. 资产 'Sw_RY_NWJR_06' 未找到，'monitor' 跳过创建
+  169. 资产 'Sw_RY_NWJR_07' 未找到，'monitor' 跳过创建
+  170. 资产 'Sw_RY_NWJR_07' 未找到，'network' 跳过创建
+  171. 资产 'Sw_RY_NWJR_08' 未找到，'network' 跳过创建
+  172. 资产 'Sw_RY_NWJR_08' 未找到，'monitor' 跳过创建
+  173. 资产 'Sw_SC_DMZ_HX_01' 未找到，'monitor' 跳过创建
+  174. 资产 'Sw_SC_DMZ_HX_01' 未找到，'network' 跳过创建
+  175. 资产 'Sw_SC_DMZ_HX_02' 未找到，'network' 跳过创建
+  176. 资产 'Sw_SC_DMZ_HX_02' 未找到，'monitor' 跳过创建
+  177. 资产 'Sw_WL_01' 未找到，'monitor' 跳过创建
+  178. 资产 'Sw_WL_01' 未找到，'network' 跳过创建
+  179. 资产 'Sw_WL_02' 未找到，'network' 跳过创建
+  180. 资产 'Sw_WL_02' 未找到，'monitor' 跳过创建
+  181. 资产 'R_WL_01' 未找到，'network' 跳过创建
+  182. 资产 'R_WL_01' 未找到，'monitor' 跳过创建
+  183. 资产 'R_WL_02' 未找到，'monitor' 跳过创建
+  184. 资产 'R_WL_02' 未找到，'network' 跳过创建
+  185. 资产 'Sw_SC_HX_JR_01' 未找到，'monitor' 跳过创建
+  186. 资产 'Sw_SC_HX_JR_01' 未找到，'network' 跳过创建
+  187. 资产 'Fw_SC_252' 未找到，'hillstone' 跳过创建
+  188. 资产 'Fw_SC_252' 未找到，'network' 跳过创建
+  189. 资产 'Fw_HLW_nei_252' 未找到，'network' 跳过创建
+  190. 资产 'Fw_HLW_nei_252' 未找到，'hillstone' 跳过创建
+  191. 资产 'Fw_HLW_wai_252' 未找到，'hillstone' 跳过创建
+  192. 资产 'Fw_HLW_wai_252' 未找到，'network' 跳过创建
+  193. 资产 'Fw_KFCS_252' 未找到，'hillstone' 跳过创建
+  194. 资产 'Fw_KFCS_252' 未找到，'network' 跳过创建
+  195. 资产 'Fw_YW_252' 未找到，'network' 跳过创建
+  196. 资产 'Fw_YW_252' 未找到，'hillstone' 跳过创建
+  197. 资产 'Fw_ZLW_252' 未找到，'hillstone' 跳过创建
+  198. 资产 'Fw_ZLW_252' 未找到，'network' 跳过创建
+  199. 资产 'Fw_ZLW_wai_248' 未找到，'hillstone' 跳过创建
+  200. 资产 'Fw_ZLW_wai_248' 未找到，'network' 跳过创建
+  201. 资产 'Fw_BGNW_252' 未找到，'network' 跳过创建
+  202. 资产 'Fw_BGNW_252' 未找到，'hillstone' 跳过创建
+  203. 资产 'Fw_WL_252' 未找到，'hillstone' 跳过创建
+  204. 资产 'Fw_WL_252' 未找到，'network' 跳过创建
+  205. 资产 'Fw_OA_252' 未找到，'hillstone' 跳过创建
+  206. 资产 'Fw_OA_252' 未找到，'network' 跳过创建
+  207. 资产 'Fw_SC_253' 未找到，'network' 跳过创建
+  208. 资产 'Fw_SC_253' 未找到，'hillstone' 跳过创建
+  209. 资产 'Fw_HLW_nei_253' 未找到，'hillstone' 跳过创建
+  210. 资产 'Fw_HLW_nei_253' 未找到，'network' 跳过创建
+  211. 资产 'Fw_HLW_wai_253' 未找到，'hillstone' 跳过创建
+  212. 资产 'Fw_HLW_wai_253' 未找到，'network' 跳过创建
+  213. 资产 'Fw_KFCS_253' 未找到，'network' 跳过创建
+  214. 资产 'Fw_KFCS_253' 未找到，'hillstone' 跳过创建
+  215. 资产 'Fw_YW_253' 未找到，'hillstone' 跳过创建
+  216. 资产 'Fw_YW_253' 未找到，'network' 跳过创建
+  217. 资产 'Fw_ZLW_nei_253' 未找到，'network' 跳过创建
+  218. 资产 'Fw_ZLW_nei_253' 未找到，'hillstone' 跳过创建
+  219. 资产 'Fw_ZLW_wai_249' 未找到，'hillstone' 跳过创建
+  220. 资产 'Fw_ZLW_wai_249' 未找到，'network' 跳过创建
+  221. 资产 'Fw_BGNW_253' 未找到，'network' 跳过创建
+  222. 资产 'Fw_BGNW_253' 未找到，'hillstone' 跳过创建
+  223. 资产 'Fw_WL_253' 未找到，'network' 跳过创建
+  224. 资产 'Fw_WL_253' 未找到，'hillstone' 跳过创建
+  225. 资产 'Fw_OA_253' 未找到，'hillstone' 跳过创建
+  226. 资产 'Fw_OA_253' 未找到，'network' 跳过创建
+  227. 'NSFOCUS@administrator' 创建失败: POST 请求失败，响应：["Account already exists"]
+  228. 'NSFOCUS@liuy' 创建失败: POST 请求失败，响应：["Account already exists"]
+  229. 'NSFOCUS@tianx' 创建失败: POST 请求失败，响应：["Account already exists"]
+  230. 'NSFOCUS@TempAccount' 创建失败: POST 请求失败，响应：["Account already exists"]
+  231. 'NSFOCUS@shichangyisi-2' 创建失败: POST 请求失败，响应：["Account already exists"]
+  232. 'NSFOCUS@shichangyisi-1' 创建失败: POST 请求失败，响应：["Account already exists"]
+  233. 'NSFOCUS@audit' 创建失败: POST 请求失败，响应：["Account already exists"]
+  234. 资产 '文件采集数据库-10.98.64.33' 未找到，'fdcs' 跳过创建
+  235. 资产 '异地备份前置机-dev1-10.137.10.146-VNC' 未找到，'csdata-dev' 跳过创建
+  236. 资产 '异地备份前置机-dev2-10.137.10.146-VNC' 未找到，'csdata-dev' 跳过创建
+  237. 资产 'Wind终端-10.99.8.5' 未找到，'test' 跳过创建
+  238. 资产 'FDEP客户端-10.98.205.2-VNC' 未找到，'root' 跳过创建
+  239. 资产 'FDEP客户端-10.98.205.1-VNC' 未找到，'root' 跳过创建
+  240. 资产 'FDEP客户端-10.98.205.2-VNC-fdep' 未找到，'fdep' 跳过创建
+  241. 资产 '数据库集群服务器1-10.99.20.33-DM8tools' 未找到，'SYSAUDITOR' 跳过创建
+  242. 资产 '10.101.207.43' 未找到，'root' 跳过创建
+  243. 资产 '异地备份前置机-init-10.137.10.146-VNC' 未找到，'init' 跳过创建
+  244. '' 创建失败: POST 请求失败，响应：{"name":["该字段不能为空。"]}
+
+【节点】(126个错误)
+  1. 资产 'Control-m' 不存在 JumpServer 中，无法绑定节点 '中证技术服务器组'，请创建后重试
+  2. 资产 '大数据平台系统的流处理' 不存在 JumpServer 中，无法绑定节点 '大数据平台(10.96.68.1-40)'，请创建后重试
+  3. 资产 '交换系统-交换节点1（10.96.3' 不存在 JumpServer 中，无法绑定节点 '交换系统'，请创建后重试
+  4. 资产 'Sw_5500_KFCS_Client_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  5. 资产 'Sw_YW_HX_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  6. 资产 'Sw_ZLW_sansuo_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  7. 资产 'Sw-5720-JY_BGNW_HX_1' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  8. 资产 'Sw_SC_APP_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  9. 资产 'Sw_ZLW_JR_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  10. 资产 'JY_Sw_SC_JR_03' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  11. 资产 'Sw_WL_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  12. 资产 'Sw_KFCS_JR_03' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  13. 资产 'Sw_SC_APP_JR_04' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  14. 资产 'JY_Sw_SC_JR_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  15. 资产 'Sw_KFCS_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  16. 资产 'Sw_OA_HX_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  17. 资产 'JY-SW6855-SC-HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  18. 资产 'Sw_HLW_DB_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  19. 资产 'SW-HX-HJ-DX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  20. 资产 'Sw_OA_JR_03' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  21. 资产 'Sw_12804_IDC_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  22. 资产 'Sw_YW_HX_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  23. 资产 'Sw_OA_10G_SAN' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  24. 资产 'Sw_KFCS_JR_04' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  25. 资产 'Sw_KFCS_JR_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  26. 资产 'Sw_OA_SC_APP_JR' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  27. 资产 'Sw_SC_HX_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  28. 资产 'Sw_6810_IDC_SC_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  29. 资产 'Sw_OA_HX_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  30. 资产 'JY-Sw-6851-DSJ-04' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  31. 资产 'Sw_OA_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  32. 资产 'Sw_ZLW_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  33. 资产 'Sw_SC_APP_JR_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  34. 资产 'Sw_SC_APP_JR_03' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  35. 资产 'Sw_OA_JR_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  36. 资产 'Sw_SC_DMZ_HX_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  37. 资产 'Sw_OA_JR_04' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  38. 资产 'JY-Sw-6851-DSJ-01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  39. 资产 'Sw-CS-DSJ-01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  40. 资产 'Sw_RY_BianJie' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  41. 资产 'Sw_HLW_APP_DB_JR' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  42. 资产 'JY-Sw-6851-DSJ-03' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  43. 资产 'SW-HX-HJ-YD' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  44. 资产 'Sw_5810_KFCS_Client_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  45. 资产 'Sw-5720-JY_BGNW_HX_2' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  46. 资产 'Sw-JY-HJ' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  47. 资产 'Sw_SC_DMZ_HX_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  48. 资产 'Sw_WL_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  49. 资产 'JY_Sw_SC_JR_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  50. 资产 'Sw_SC_APP_JR_06' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  51. 资产 'Sw_KFCS_HX_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  52. 资产 'Sw_HLW_APP_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  53. 资产 'Sw_SC_APP_JR_05' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  54. 资产 'Sw-5810-IDC_ZLW_HX' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  55. 资产 'JY_Sw_SC_JR_04' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  56. 资产 'JY-Sw-6851-DSJ-02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  57. 资产 'Sw_RY_BGNW' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  58. 资产 'Sw_KFCS_HX_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  59. 资产 'R_WL_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  60. 资产 'R_WL_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  61. 资产 'R_AR3260_IDC_ZLW_02' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  62. 资产 'R_AR3260_IDC_ZLW_01' 不存在 JumpServer 中，无法绑定节点 '路由交换'，请创建后重试
+  63. 资产 'Sw_JY_JKS_NWJR_03' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  64. 资产 'Sw_RY_NWJR_02' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  65. 资产 'SW-JSF-NWJR-14-D' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  66. 资产 'SW-JSF-NWJR-03-A' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  67. 资产 'Sw_JY_NWJR_01' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  68. 资产 'SW-HX-NWJR-03' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  69. 资产 'Sw_JY_JKS_NWJR_01' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  70. 资产 'SW-HX-NWJR-05' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  71. 资产 'SW-JSF-NWJR-06-B' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  72. 资产 'SW-JSF-NWJR-01-A' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  73. 资产 'SW-JSF-NWJR-02-A' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  74. 资产 'Sw_RY_NWJR_05' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  75. 资产 'SW-JSF-NWJR-12-D' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  76. 资产 'SW-JSF-NWJR-10-C' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  77. 资产 'SW-HX-NWJR-04' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  78. 资产 'SW-JSF-NWJR-08-C' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  79. 资产 'SW-JSF-NWJR-04-B' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  80. 资产 'Sw_JY_JKS_NWJR_02' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  81. 资产 'Sw_JY_NWJR_03' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  82. 资产 'Sw_RY_NWJR_08' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  83. 资产 'Sw_RY_NWJR_01' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  84. 资产 'SW-JSF-NWJR-13-D' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  85. 资产 'SW-JSF-NWJR-05-B' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  86. 资产 'Sw_RY_NWJR_07' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  87. 资产 'SW-HX-NWJR-02' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  88. 资产 'SW-JSF-NWJR-11-D' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  89. 资产 'Sw_RY_NWJR_04' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  90. 资产 'Sw_RY_NWJR_06' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  91. 资产 'SW-JSF-NWJR-07-C' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  92. 资产 'Sw_RY_NWJR_03' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  93. 资产 'SW-HX-NWJR-01' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  94. 资产 'Sw_JY_JKS_NWJR_04' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  95. 资产 'SW-JSF-NWJR-09-C' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  96. 资产 'Sw_JY_NWJR_02' 不存在 JumpServer 中，无法绑定节点 '办公内网接入交换机'，请创建后重试
+  97. 资产 '问题管理平台数据库' 不存在 JumpServer 中，无法绑定节点 '巡检设备组'，请创建后重试
+  98. 资产 '图生产服务器2-10.14' 不存在 JumpServer 中，无法绑定节点 '图数据库组'，请创建后重试
+  99. 资产 'Fw_BGNW_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  100. 资产 'Fw_ZLW_nei_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  101. 资产 'Fw_ZLW_wai_249' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  102. 资产 'Fw_YW_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  103. 资产 'Fw_SC_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  104. 资产 'Fw_OA_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  105. 资产 'Fw_HLW_nei_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  106. 资产 'Fw_KFCS_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  107. 资产 'Fw_HLW_nei_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  108. 资产 'Fw_WL_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  109. 资产 'Fw_WL_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  110. 资产 'Fw_HLW_wai_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  111. 资产 'Fw_ZLW_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  112. 资产 'Fw_KFCS_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  113. 资产 'Fw_HLW_wai_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  114. 资产 'Fw_SC_253' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  115. 资产 'Fw_YW_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  116. 资产 'Fw_ZLW_wai_248' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  117. 资产 'Fw_BGNW_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  118. 资产 'Fw_OA_252' 不存在 JumpServer 中，无法绑定节点 '防火墙ssh'，请创建后重试
+  119. 资产 'EAM仿真-数据库服务器-10.141.' 不存在 JumpServer 中，无法绑定节点 'EAM仿真环境'，请创建后重试
+  120. 资产 '星环Manager 10.96.68.9:8180' 不存在 JumpServer 中，无法绑定节点 '星环 央库同城备份（admin）'，请创建后重试
+  121. 资产 'Control-m' 不存在 JumpServer 中，无法绑定节点 '星环 央库同城备份（admin）'，请创建后重试
+  122. 资产 '星环Manager 10.96.68.9:8180' 不存在 JumpServer 中，无法绑定节点 '星环 央库同城备份（monitor）'，请创建后重试
+  123. 资产 'Control-m' 不存在 JumpServer 中，无法绑定节点 '星环 央库同城备份（monitor）'，请创建后重试
+  124. 资产 'Control-m' 不存在 JumpServer 中，无法绑定节点 '采集交换 星环 央库同城备份'，请创建后重试
+  125. 资产 '星环Manager 10.96.68.9:8180' 不存在 JumpServer 中，无法绑定节点 '采集交换 星环 央库同城备份'，请创建后重试
+  126. 资产 'DAO生产数据库服务器10.141' 不存在 JumpServer 中，无法绑定节点 '三系统仿真生产服务器'，请创建后重试
+
+【授权】(123个错误)
+  1. 用户 'supervisor' 在 JumpServer 不存在，跳过授权
+  2. 资产 'Wind终端-10.99.8.5' 在 JumpServer 不存在，跳过授权
+  3. 资产 '数据库集群服务器1-10.99.20.33-DM8tools' 在 JumpServer 不存在，跳过授权
+  4. 资产 '异地备份前置机-dev1-10.137.10.146-VNC' 在 JumpServer 不存在，跳过授权
+  5. 资产 '异地备份前置机-dev2-10.137.10.146-VNC' 在 JumpServer 不存在，跳过授权
+  6. 资产 'FDEP客户端-10.98.205.1-VNC' 在 JumpServer 不存在，跳过授权
+  7. 资产 'FDEP客户端-10.98.205.2-VNC-fdep' 在 JumpServer 不存在，跳过授权
+  8. 资产 '文件采集数据库-10.98.64.33' 在 JumpServer 不存在，跳过授权
+  9. 资产 'SW-JSF-NWJR-13-D' 在 JumpServer 不存在，跳过授权
+  10. 资产 'SW-JSF-NWJR-14-D' 在 JumpServer 不存在，跳过授权
+  11. 资产 'SW-HX-NWJR-01' 在 JumpServer 不存在，跳过授权
+  12. 资产 'SW-HX-NWJR-02' 在 JumpServer 不存在，跳过授权
+  13. 资产 'SW-HX-NWJR-03' 在 JumpServer 不存在，跳过授权
+  14. 资产 'SW-HX-NWJR-04' 在 JumpServer 不存在，跳过授权
+  15. 资产 'SW-HX-NWJR-05' 在 JumpServer 不存在，跳过授权
+  16. 资产 'Sw_RY_NWJR_01' 在 JumpServer 不存在，跳过授权
+  17. 资产 'Sw_RY_NWJR_02' 在 JumpServer 不存在，跳过授权
+  18. 资产 'Sw_RY_NWJR_03' 在 JumpServer 不存在，跳过授权
+  19. 资产 'Sw_RY_NWJR_04' 在 JumpServer 不存在，跳过授权
+  20. 资产 'Sw_RY_NWJR_05' 在 JumpServer 不存在，跳过授权
+  21. 资产 'Sw_RY_NWJR_06' 在 JumpServer 不存在，跳过授权
+  22. 资产 'Sw_RY_NWJR_07' 在 JumpServer 不存在，跳过授权
+  23. 资产 'Sw_RY_NWJR_08' 在 JumpServer 不存在，跳过授权
+  24. 资产 'Sw_JY_NWJR_01' 在 JumpServer 不存在，跳过授权
+  25. 资产 'Sw_JY_NWJR_02' 在 JumpServer 不存在，跳过授权
+  26. 资产 'Sw_JY_NWJR_03' 在 JumpServer 不存在，跳过授权
+  27. 资产 'Sw_JY_JKS_NWJR_01' 在 JumpServer 不存在，跳过授权
+  28. 资产 'Sw_JY_JKS_NWJR_02' 在 JumpServer 不存在，跳过授权
+  29. 资产 'Sw_JY_JKS_NWJR_03' 在 JumpServer 不存在，跳过授权
+  30. 资产 'Sw_JY_JKS_NWJR_04' 在 JumpServer 不存在，跳过授权
+  31. 资产 'SW-JSF-NWJR-01-A' 在 JumpServer 不存在，跳过授权
+  32. 资产 'SW-JSF-NWJR-02-A' 在 JumpServer 不存在，跳过授权
+  33. 资产 'SW-JSF-NWJR-03-A' 在 JumpServer 不存在，跳过授权
+  34. 资产 'SW-JSF-NWJR-04-B' 在 JumpServer 不存在，跳过授权
+  35. 资产 'SW-JSF-NWJR-05-B' 在 JumpServer 不存在，跳过授权
+  36. 资产 'SW-JSF-NWJR-06-B' 在 JumpServer 不存在，跳过授权
+  37. 资产 'SW-JSF-NWJR-07-C' 在 JumpServer 不存在，跳过授权
+  38. 资产 'SW-JSF-NWJR-08-C' 在 JumpServer 不存在，跳过授权
+  39. 资产 'SW-JSF-NWJR-09-C' 在 JumpServer 不存在，跳过授权
+  40. 资产 'SW-JSF-NWJR-10-C' 在 JumpServer 不存在，跳过授权
+  41. 资产 'SW-JSF-NWJR-11-D' 在 JumpServer 不存在，跳过授权
+  42. 资产 'SW-JSF-NWJR-12-D' 在 JumpServer 不存在，跳过授权
+  43. 资产 'Sw_SC_APP_JR_02' 在 JumpServer 不存在，跳过授权
+  44. 资产 'Sw_HLW_APP_HX' 在 JumpServer 不存在，跳过授权
+  45. 资产 'Sw_SC_APP_JR_06' 在 JumpServer 不存在，跳过授权
+  46. 资产 'Sw_HLW_APP_DB_JR' 在 JumpServer 不存在，跳过授权
+  47. 资产 'Fw_YW_253' 在 JumpServer 不存在，跳过授权
+  48. 资产 'Sw_KFCS_JR_02' 在 JumpServer 不存在，跳过授权
+  49. 资产 'Sw-5810-IDC_ZLW_HX' 在 JumpServer 不存在，跳过授权
+  50. 资产 'Sw_KFCS_JR_03' 在 JumpServer 不存在，跳过授权
+  51. 资产 'Sw_OA_10G_SAN' 在 JumpServer 不存在，跳过授权
+  52. 资产 'Sw_WL_02' 在 JumpServer 不存在，跳过授权
+  53. 资产 'JY_Sw_SC_JR_03' 在 JumpServer 不存在，跳过授权
+  54. 资产 'Sw_KFCS_JR_01' 在 JumpServer 不存在，跳过授权
+  55. 资产 'JY_Sw_SC_JR_04' 在 JumpServer 不存在，跳过授权
+  56. 资产 'Sw_HLW_DB_HX' 在 JumpServer 不存在，跳过授权
+  57. 资产 'Sw_OA_HX_02' 在 JumpServer 不存在，跳过授权
+  58. 资产 'Sw_KFCS_HX_02' 在 JumpServer 不存在，跳过授权
+  59. 资产 'Sw_SC_APP_JR_04' 在 JumpServer 不存在，跳过授权
+  60. 资产 'Sw_SC_DMZ_HX_02' 在 JumpServer 不存在，跳过授权
+  61. 资产 'Sw_12804_IDC_HX' 在 JumpServer 不存在，跳过授权
+  62. 资产 'R_WL_01' 在 JumpServer 不存在，跳过授权
+  63. 资产 'JY-Sw-6851-DSJ-02' 在 JumpServer 不存在，跳过授权
+  64. 资产 'Sw_WL_01' 在 JumpServer 不存在，跳过授权
+  65. 资产 'Fw_HLW_nei_253' 在 JumpServer 不存在，跳过授权
+  66. 资产 'JY-Sw-6851-DSJ-03' 在 JumpServer 不存在，跳过授权
+  67. 资产 'Sw_RY_BGNW' 在 JumpServer 不存在，跳过授权
+  68. 资产 'Sw_YW_HX_02' 在 JumpServer 不存在，跳过授权
+  69. 资产 'JY-Sw-6851-DSJ-04' 在 JumpServer 不存在，跳过授权
+  70. 资产 'Sw_OA_JR_03' 在 JumpServer 不存在，跳过授权
+  71. 资产 'JY_Sw_SC_JR_02' 在 JumpServer 不存在，跳过授权
+  72. 资产 'Fw_HLW_wai_252' 在 JumpServer 不存在，跳过授权
+  73. 资产 'R_AR3260_IDC_ZLW_01' 在 JumpServer 不存在，跳过授权
+  74. 资产 'Sw_ZLW_JR_02' 在 JumpServer 不存在，跳过授权
+  75. 资产 'Sw-5720-JY_BGNW_HX_2' 在 JumpServer 不存在，跳过授权
+  76. 资产 'R_AR3260_IDC_ZLW_02' 在 JumpServer 不存在，跳过授权
+  77. 资产 'Sw_ZLW_sansuo_HX' 在 JumpServer 不存在，跳过授权
+  78. 资产 'Sw_OA_HX_01' 在 JumpServer 不存在，跳过授权
+  79. 资产 'Sw_SC_APP_JR_01' 在 JumpServer 不存在，跳过授权
+  80. 资产 'Fw_ZLW_252' 在 JumpServer 不存在，跳过授权
+  81. 资产 'Sw_OA_JR_04' 在 JumpServer 不存在，跳过授权
+  82. 资产 'Sw_OA_JR_02' 在 JumpServer 不存在，跳过授权
+  83. 资产 'Sw_SC_APP_JR_03' 在 JumpServer 不存在，跳过授权
+  84. 资产 'Sw_KFCS_JR_04' 在 JumpServer 不存在，跳过授权
+  85. 资产 'Sw_OA_SC_APP_JR' 在 JumpServer 不存在，跳过授权
+  86. 资产 'R_WL_02' 在 JumpServer 不存在，跳过授权
+  87. 资产 'Fw_ZLW_wai_249' 在 JumpServer 不存在，跳过授权
+  88. 资产 'Sw_RY_BianJie' 在 JumpServer 不存在，跳过授权
+  89. 资产 'Sw-5720-JY_BGNW_HX_1' 在 JumpServer 不存在，跳过授权
+  90. 资产 'Fw_WL_252' 在 JumpServer 不存在，跳过授权
+  91. 资产 'Sw-JY-HJ' 在 JumpServer 不存在，跳过授权
+  92. 资产 'Fw_KFCS_252' 在 JumpServer 不存在，跳过授权
+  93. 资产 'Fw_YW_252' 在 JumpServer 不存在，跳过授权
+  94. 资产 'Sw_SC_HX_JR_01' 在 JumpServer 不存在，跳过授权
+  95. 资产 'Sw-CS-DSJ-01' 在 JumpServer 不存在，跳过授权
+  96. 资产 'Fw_WL_253' 在 JumpServer 不存在，跳过授权
+  97. 资产 'JY-SW6855-SC-HX' 在 JumpServer 不存在，跳过授权
+  98. 资产 'Sw_KFCS_HX_01' 在 JumpServer 不存在，跳过授权
+  99. 资产 'JY_Sw_SC_JR_01' 在 JumpServer 不存在，跳过授权
+  100. 资产 'SW-HX-HJ-DX' 在 JumpServer 不存在，跳过授权
+  101. 资产 'Sw_YW_HX_01' 在 JumpServer 不存在，跳过授权
+  102. 资产 'Sw_OA_JR_01' 在 JumpServer 不存在，跳过授权
+  103. 资产 'JY-Sw-6851-DSJ-01' 在 JumpServer 不存在，跳过授权
+  104. 资产 'Fw_OA_252' 在 JumpServer 不存在，跳过授权
+  105. 资产 'Fw_SC_253' 在 JumpServer 不存在，跳过授权
+  106. 资产 'Sw_5810_KFCS_Client_01' 在 JumpServer 不存在，跳过授权
+  107. 资产 'Sw_SC_APP_JR_05' 在 JumpServer 不存在，跳过授权
+  108. 资产 'Fw_HLW_wai_253' 在 JumpServer 不存在，跳过授权
+  109. 资产 'Fw_KFCS_253' 在 JumpServer 不存在，跳过授权
+  110. 资产 'Sw_ZLW_JR_01' 在 JumpServer 不存在，跳过授权
+  111. 资产 'Fw_BGNW_252' 在 JumpServer 不存在，跳过授权
+  112. 资产 'Fw_ZLW_wai_248' 在 JumpServer 不存在，跳过授权
+  113. 资产 'Sw_SC_DMZ_HX_01' 在 JumpServer 不存在，跳过授权
+  114. 资产 'Fw_HLW_nei_252' 在 JumpServer 不存在，跳过授权
+  115. 资产 'Fw_OA_253' 在 JumpServer 不存在，跳过授权
+  116. 资产 'Fw_ZLW_nei_253' 在 JumpServer 不存在，跳过授权
+  117. 资产 'Fw_BGNW_253' 在 JumpServer 不存在，跳过授权
+  118. 资产 'Sw_6810_IDC_SC_HX' 在 JumpServer 不存在，跳过授权
+  119. 资产 'Fw_SC_252' 在 JumpServer 不存在，跳过授权
+  120. 资产 'SW-HX-HJ-YD' 在 JumpServer 不存在，跳过授权
+  121. 资产 'MySQL' 在 JumpServer 不存在，跳过授权
+  122. 资产 'Sw_5500_KFCS_Client_02' 在 JumpServer 不存在，跳过授权
+  123. 资产 '异地备份前置机-init-10.137.10.146-VNC' 在 JumpServer 不存在，跳过授权
+
+【资产】(142个错误)
+  1. 资产平台 '其他设备' 不存在，'Control-m' 跳过创建
+  2. 资产平台 '其他设备' 不存在，'notes' 跳过创建
+  3. 资产平台 '交换机' 不存在，'办公内网核心交换机1' 跳过创建
+  4. 资产平台 '交换机' 不存在，'办公内网核心交换机2' 跳过创建
+  5. 资产平台 '交换机' 不存在，'生产区APP层核心交换机' 跳过创建
+  6. 资产平台 '交换机' 不存在，'生产区核心层核心交换机' 跳过创建
+  7. 资产平台 '交换机' 不存在，'生产区央库互联交换机' 跳过创建
+  8. 资产平台 '交换机' 不存在，'网上业务区app交换机' 跳过创建
+  9. 资产平台 '交换机' 不存在，'网上业务区DB交换机' 跳过创建
+  10. 资产平台 '交换机' 不存在，'证联网区核心交换机' 跳过创建
+  11. 资产平台 '交换机' 不存在，'OA区核心交换机1' 跳过创建
+  12. 资产平台 '交换机' 不存在，'OA区核心交换机2' 跳过创建
+  13. '证联网客户端服务器10.98.64.46' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  14. 资产平台 '交换机' 不存在，'Sw_12804_IDC_HX' 跳过创建
+  15. 资产平台 '交换机' 不存在，'Sw_6810_IDC_SC_HX' 跳过创建
+  16. 资产平台 '交换机' 不存在，'JY-SW6855-SC-HX' 跳过创建
+  17. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_01' 跳过创建
+  18. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_02' 跳过创建
+  19. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_03' 跳过创建
+  20. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_04' 跳过创建
+  21. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_05' 跳过创建
+  22. 资产平台 '交换机' 不存在，'Sw_SC_APP_JR_06' 跳过创建
+  23. 资产平台 '交换机' 不存在，'JY-Sw-6851-DSJ-01' 跳过创建
+  24. 资产平台 '交换机' 不存在，'JY-Sw-6851-DSJ-02' 跳过创建
+  25. 资产平台 '交换机' 不存在，'JY-Sw-6851-DSJ-03' 跳过创建
+  26. 资产平台 '交换机' 不存在，'JY-Sw-6851-DSJ-04' 跳过创建
+  27. 资产平台 '交换机' 不存在，'JY_Sw_SC_JR_01' 跳过创建
+  28. 资产平台 '交换机' 不存在，'JY_Sw_SC_JR_02' 跳过创建
+  29. 资产平台 '交换机' 不存在，'JY_Sw_SC_JR_03' 跳过创建
+  30. 资产平台 '交换机' 不存在，'JY_Sw_SC_JR_04' 跳过创建
+  31. 资产平台 '交换机' 不存在，'Sw-5810-IDC_ZLW_HX' 跳过创建
+  32. 资产平台 '交换机' 不存在，'Sw_ZLW_sansuo_HX' 跳过创建
+  33. 资产平台 '交换机' 不存在，'Sw_ZLW_JR_01' 跳过创建
+  34. 资产平台 '交换机' 不存在，'Sw_ZLW_JR_02' 跳过创建
+  35. 资产平台 '交换机' 不存在，'Sw_HLW_DB_HX' 跳过创建
+  36. 资产平台 '交换机' 不存在，'Sw_HLW_APP_HX' 跳过创建
+  37. 资产平台 '交换机' 不存在，'Sw_HLW_APP_DB_JR' 跳过创建
+  38. 资产平台 '交换机' 不存在，'Sw_YW_HX_01' 跳过创建
+  39. 资产平台 '交换机' 不存在，'Sw_YW_HX_02' 跳过创建
+  40. 资产平台 '交换机' 不存在，'Sw_KFCS_HX_01' 跳过创建
+  41. 资产平台 '交换机' 不存在，'Sw_KFCS_HX_02' 跳过创建
+  42. 资产平台 '交换机' 不存在，'Sw_KFCS_JR_01' 跳过创建
+  43. 资产平台 '交换机' 不存在，'Sw_KFCS_JR_02' 跳过创建
+  44. 资产平台 '交换机' 不存在，'Sw_KFCS_JR_03' 跳过创建
+  45. 资产平台 '交换机' 不存在，'Sw_KFCS_JR_04' 跳过创建
+  46. 资产平台 '交换机' 不存在，'Sw_5810_KFCS_Client_01' 跳过创建
+  47. 资产平台 '交换机' 不存在，'Sw_5500_KFCS_Client_02' 跳过创建
+  48. 资产平台 '交换机' 不存在，'Sw-CS-DSJ-01' 跳过创建
+  49. 资产平台 '交换机' 不存在，'Sw_OA_HX_01' 跳过创建
+  50. 资产平台 '交换机' 不存在，'Sw_OA_HX_02' 跳过创建
+  51. 资产平台 '交换机' 不存在，'Sw_OA_JR_01' 跳过创建
+  52. 资产平台 '交换机' 不存在，'Sw_OA_JR_02' 跳过创建
+  53. 资产平台 '交换机' 不存在，'Sw_OA_JR_03' 跳过创建
+  54. 资产平台 '交换机' 不存在，'Sw_OA_JR_04' 跳过创建
+  55. 资产平台 '交换机' 不存在，'Sw_OA_10G_SAN' 跳过创建
+  56. 资产平台 '交换机' 不存在，'Sw_OA_SC_APP_JR' 跳过创建
+  57. 资产平台 '交换机' 不存在，'Sw-5720-JY_BGNW_HX_1' 跳过创建
+  58. 资产平台 '交换机' 不存在，'Sw-5720-JY_BGNW_HX_2' 跳过创建
+  59. 资产平台 '路由器' 不存在，'R_AR3260_IDC_ZLW_01' 跳过创建
+  60. 资产平台 '路由器' 不存在，'R_AR3260_IDC_ZLW_02' 跳过创建
+  61. 资产平台 '交换机' 不存在，'Sw-JY-HJ' 跳过创建
+  62. 资产平台 '交换机' 不存在，'SW-HX-HJ-DX' 跳过创建
+  63. 资产平台 '交换机' 不存在，'SW-HX-HJ-YD' 跳过创建
+  64. 资产平台 '交换机' 不存在，'Sw_JY_NWJR_01' 跳过创建
+  65. 资产平台 '交换机' 不存在，'Sw_JY_NWJR_02' 跳过创建
+  66. 资产平台 '交换机' 不存在，'Sw_JY_NWJR_03' 跳过创建
+  67. 资产平台 '交换机' 不存在，'Sw_JY_JKS_NWJR_01' 跳过创建
+  68. 资产平台 '交换机' 不存在，'Sw_JY_JKS_NWJR_02' 跳过创建
+  69. 资产平台 '交换机' 不存在，'Sw_JY_JKS_NWJR_03' 跳过创建
+  70. 资产平台 '交换机' 不存在，'Sw_JY_JKS_NWJR_04' 跳过创建
+  71. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-01-A' 跳过创建
+  72. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-02-A' 跳过创建
+  73. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-03-A' 跳过创建
+  74. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-04-B' 跳过创建
+  75. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-05-B' 跳过创建
+  76. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-06-B' 跳过创建
+  77. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-07-C' 跳过创建
+  78. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-08-C' 跳过创建
+  79. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-09-C' 跳过创建
+  80. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-10-C' 跳过创建
+  81. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-11-D' 跳过创建
+  82. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-12-D' 跳过创建
+  83. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-13-D' 跳过创建
+  84. 资产平台 '交换机' 不存在，'SW-JSF-NWJR-14-D' 跳过创建
+  85. 资产平台 '交换机' 不存在，'SW-HX-NWJR-01' 跳过创建
+  86. 资产平台 '交换机' 不存在，'SW-HX-NWJR-02' 跳过创建
+  87. 资产平台 '交换机' 不存在，'SW-HX-NWJR-03' 跳过创建
+  88. 资产平台 '交换机' 不存在，'SW-HX-NWJR-04' 跳过创建
+  89. 资产平台 '交换机' 不存在，'SW-HX-NWJR-05' 跳过创建
+  90. 资产平台 '交换机' 不存在，'Sw_RY_BianJie' 跳过创建
+  91. 资产平台 '交换机' 不存在，'Sw_RY_BGNW' 跳过创建
+  92. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_01' 跳过创建
+  93. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_02' 跳过创建
+  94. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_03' 跳过创建
+  95. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_04' 跳过创建
+  96. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_05' 跳过创建
+  97. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_06' 跳过创建
+  98. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_07' 跳过创建
+  99. 资产平台 '交换机' 不存在，'Sw_RY_NWJR_08' 跳过创建
+  100. 资产平台 '交换机' 不存在，'Sw_SC_DMZ_HX_01' 跳过创建
+  101. 资产平台 '交换机' 不存在，'Sw_SC_DMZ_HX_02' 跳过创建
+  102. 资产平台 '交换机' 不存在，'Sw_WL_01' 跳过创建
+  103. 资产平台 '交换机' 不存在，'Sw_WL_02' 跳过创建
+  104. 资产平台 '路由器' 不存在，'R_WL_01' 跳过创建
+  105. 资产平台 '路由器' 不存在，'R_WL_02' 跳过创建
+  106. 资产平台 '交换机' 不存在，'Sw_SC_HX_JR_01' 跳过创建
+  107. 资产平台 '防火墙' 不存在，'Fw_SC_252' 跳过创建
+  108. 资产平台 '防火墙' 不存在，'Fw_HLW_nei_252' 跳过创建
+  109. 资产平台 '防火墙' 不存在，'Fw_HLW_wai_252' 跳过创建
+  110. 资产平台 '防火墙' 不存在，'Fw_KFCS_252' 跳过创建
+  111. 资产平台 '防火墙' 不存在，'Fw_YW_252' 跳过创建
+  112. 资产平台 '防火墙' 不存在，'Fw_ZLW_252' 跳过创建
+  113. 资产平台 '防火墙' 不存在，'Fw_ZLW_wai_248' 跳过创建
+  114. 资产平台 '防火墙' 不存在，'Fw_BGNW_252' 跳过创建
+  115. 资产平台 '防火墙' 不存在，'Fw_WL_252' 跳过创建
+  116. 资产平台 '防火墙' 不存在，'Fw_OA_252' 跳过创建
+  117. 资产平台 '防火墙' 不存在，'Fw_SC_253' 跳过创建
+  118. 资产平台 '防火墙' 不存在，'Fw_HLW_nei_253' 跳过创建
+  119. 资产平台 '防火墙' 不存在，'Fw_HLW_wai_253' 跳过创建
+  120. 资产平台 '防火墙' 不存在，'Fw_KFCS_253' 跳过创建
+  121. 资产平台 '防火墙' 不存在，'Fw_YW_253' 跳过创建
+  122. 资产平台 '防火墙' 不存在，'Fw_ZLW_nei_253' 跳过创建
+  123. 资产平台 '防火墙' 不存在，'Fw_ZLW_wai_249' 跳过创建
+  124. 资产平台 '防火墙' 不存在，'Fw_BGNW_253' 跳过创建
+  125. 资产平台 '防火墙' 不存在，'Fw_WL_253' 跳过创建
+  126. 资产平台 '防火墙' 不存在，'Fw_OA_253' 跳过创建
+  127. 'DBEAVER - 10.98.64.162' 更新失败: PUT 请求失败，响应：{"protocols":["该字段不能为 null。"]}
+  128. '异地备份前置机-dev1-10.137.10.146-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  129. '异地备份前置机-dev2-10.137.10.146-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  130. 'Wind终端-10.99.8.5' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  131. '天镜漏洞扫描设备ftp' 更新失败: PUT 请求失败，响应：{"protocols":["该字段不能为 null。"]}
+  132. '监管云-10.141.1.20-vnc' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  133. '监管云-10.141.1.21-vnc' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  134. '前置机ftp服务-19' 更新失败: PUT 请求失败，响应：{"protocols":["该字段不能为 null。"]}
+  135. 'FDEP客户端-10.98.205.2-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  136. 'FDEP客户端-10.98.205.1-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  137. 'FDEP客户端-10.98.205.2-VNC-fdep' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  138. '前置机ftp服务-25' 更新失败: PUT 请求失败，响应：{"protocols":["该字段不能为 null。"]}
+  139. '10.101.207.43' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  140. 资产平台 '其他设备' 不存在，'10.99.20.33-DM8tools-Test' 跳过创建
+  141. '异地备份前置机-init-10.137.10.146-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+  142. '一库大数据管家1-10.141.43.89-VNC' 创建失败: POST 请求失败，响应：{"protocols":{"protocols":"协议是必填的: ssh"}}
+
+----------------------------------------
+总计: 635 个错误

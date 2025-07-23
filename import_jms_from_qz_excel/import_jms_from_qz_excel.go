@@ -11,6 +11,7 @@ import (
 	"net/http"
 	urlParse "net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -25,16 +26,23 @@ const (
 	SystemUser   = "00000000-0000-0000-0000-000000000003"
 	OrgUser      = "00000000-0000-0000-0000-000000000007"
 	AllDay       = "00:00~00:00"
+
+	C_Asset     = "资产"
+	C_Account   = "账号"
+	C_User      = "用户"
+	C_UserGroup = "用户组"
+	C_Node      = "节点"
+	C_Perm      = "授权"
 )
 
-func readExcelFile(filePath string, headerRowNum int) ([][]string, error) {
+func readExcelFile(filePath string, headerRowNum, sheetIndex int) ([][]string, error) {
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("打开Excel失败：%w", err)
 	}
 	defer f.Close()
 
-	sheetName := f.GetSheetName(0)
+	sheetName := f.GetSheetName(sheetIndex)
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
 		return nil, fmt.Errorf("读取工作表失败：%w", err)
@@ -189,6 +197,20 @@ type UserResponse struct {
 	Results []User  `json:"results"`
 }
 
+type LabelValue struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+func (jms *JumpServer) ListProtocols() ([]LabelValue, error) {
+	url := "/api/v1/assets/protocols/"
+	var resp []LabelValue
+	if err := jms.Get(url, &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (jms *JumpServer) ListUsers() ([]User, error) {
 	var users []User
 	url := "/api/v1/users/users/?limit=100&offset=0&fields_size=mini"
@@ -240,9 +262,16 @@ type ACLRule struct {
 	Period  []IDValue `json:"time_period"`
 }
 
+type ACLAttr struct {
+	Match string `json:"match"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type ACLUser struct {
-	Type string   `json:"type"`
-	Ids  []string `json:"ids"`
+	Type  string    `json:"type"`
+	Ids   []string  `json:"ids"`
+	Attrs []ACLAttr `json:"attrs"`
 }
 
 type LoginACL struct {
@@ -330,11 +359,6 @@ func (jms *JumpServer) UpdateUserGroup(id string, group UserGroup) error {
 	return nil
 }
 
-type LabelValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
-
 type Platform struct {
 	ID       int        `json:"id"`
 	Name     string     `json:"name"`
@@ -365,12 +389,15 @@ func (jms *JumpServer) ListPlatforms() ([]Platform, error) {
 }
 
 type Asset struct {
-	ID           string     `json:"id,omitempty"`
-	Name         string     `json:"name"`
-	Address      string     `json:"address"`
-	Platform     Platform   `json:"platform"`
-	Protocols    []Protocol `json:"protocols"`
-	NodesDisplay []string   `json:"nodes_display"`
+	ID           string       `json:"id,omitempty"`
+	Name         string       `json:"name"`
+	Address      string       `json:"address"`
+	Platform     Platform     `json:"platform"`
+	Protocols    []Protocol   `json:"protocols"`
+	NodesDisplay []string     `json:"nodes_display"`
+	Comment      string       `json:"comment"`
+	Accounts     []JmsAccount `json:"accounts"`
+	AutoFill     string       `json:"autofill,omitempty"`
 }
 
 type AssetResponse struct {
@@ -412,7 +439,7 @@ func (jms *JumpServer) UpdateAsset(id, category string, asset Asset) error {
 }
 
 type Account struct {
-	ID         string     `json:"id"`
+	ID         string     `json:"id,omitempty"`
 	Name       string     `json:"name"`
 	Username   string     `json:"username"`
 	Asset      Asset      `json:"asset"`
@@ -511,7 +538,7 @@ func (p *Permission) mergeAccounts(accountName string) {
 	p.Accounts = append(p.Accounts, accountName)
 }
 
-func (p *Permission) mergeProtocols(value string) {
+func (p *Permission) mergeProtocols(value string, protocolsMap map[string]bool) {
 	set := make(map[string]struct{})
 	for _, p1 := range p.Protocols {
 		set[strings.ToLower(p1)] = struct{}{}
@@ -522,7 +549,7 @@ func (p *Permission) mergeProtocols(value string) {
 	}
 	result := make([]string, 0, len(set))
 	for item := range set {
-		if item == "ftp" || item == "scp" {
+		if _, exists := protocolsMap[item]; !exists {
 			continue
 		}
 		result = append(result, item)
@@ -612,6 +639,25 @@ type Handler struct {
 	accountMap   map[string]string
 	nodeMap      map[string]string
 	permMap      map[string]string
+
+	errorMsgBucket   map[string][]string
+	errorMsgCache    map[string]bool
+	supportProtocols map[string]bool
+}
+
+func (h *Handler) AddError(category, errMsg string) {
+	if _, exists := h.errorMsgCache[errMsg]; exists {
+		return
+	}
+
+	h.errorMsgCache[errMsg] = true
+	errMsgBucket, exist := h.errorMsgBucket[category]
+	if exist {
+		errMsgBucket = append(errMsgBucket, errMsg)
+		h.errorMsgBucket[category] = errMsgBucket
+	} else {
+		h.errorMsgBucket[category] = []string{errMsg}
+	}
 }
 
 func (h *Handler) checkHeaders(headers, data []string) {
@@ -653,6 +699,30 @@ func (h *Handler) getUserFromRemote() {
 	}
 }
 
+func (h *Handler) getValidRow(row []string, length int) []string {
+	if length <= len(row) {
+		return row
+	}
+
+	need := length - len(row)
+	result := make([]string, 0, length)
+	result = append(result, row...)
+	for i := 0; i < need; i++ {
+		result = append(result, "")
+	}
+	return result
+}
+
+func (h *Handler) InitResources() {
+	protocols, err := h.jmsClient.ListProtocols()
+	if err != nil {
+		log.Fatalf("获取资产协议数据失败: %v", err)
+	}
+	for _, protocol := range protocols {
+		h.supportProtocols[protocol.Value] = true
+	}
+}
+
 func (h *Handler) MigrateUser() {
 	config := h.config.User
 	if config.Path == "" {
@@ -660,7 +730,7 @@ func (h *Handler) MigrateUser() {
 	}
 
 	log.Println("开始迁移用户数据...")
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("读取用户 Excel 失败：%v", err)
 	}
@@ -680,10 +750,20 @@ func (h *Handler) MigrateUser() {
 	for i := 0; i <= 6; i++ {
 		periods = append(periods, IDValue{ID: i, Value: AllDay})
 	}
+
+	var aclUser ACLUser
+	if !h.config.Jumpserver.ACLLoginDenyIncludeAdmin {
+		attrs := []ACLAttr{
+			{Match: "not", Value: "admin", Name: "username"},
+		}
+		aclUser = ACLUser{Type: "attrs", Attrs: attrs}
+	} else {
+		aclUser = ACLUser{Type: "all"}
+	}
 	gLoginAcl := LoginACL{
 		Name: "DENY_ALL", Priority: 80, Action: "reject",
 		Rules: &ACLRule{IpGroup: []string{"*"}, Period: periods},
-		Users: ACLUser{Type: "all"},
+		Users: aclUser,
 	}
 	_ = h.jmsClient.CreateLoginACL(gLoginAcl)
 
@@ -697,6 +777,7 @@ func (h *Handler) MigrateUser() {
 	h.jmsClient.SetOrg(rawOrgId)
 
 	for _, row := range rows[h.config.User.HeaderRowNum+1:] {
+		row = h.getValidRow(row, len(headers))
 		source := "local"
 		if row[1] != "" {
 			source = row[1]
@@ -718,7 +799,7 @@ func (h *Handler) MigrateUser() {
 					ID: groupId, Name: groupName, Users: make([]string, 0),
 				}
 				if err = h.jmsClient.CreateUserGroup(userGroup); err != nil {
-					log.Printf("[ERROR] [用户组: %s] 创建失败: %v", groupName, err)
+					h.AddError(C_UserGroup, fmt.Sprintf("'%s' 创建失败: %v", groupName, err))
 					groupId = ""
 				} else {
 					h.groupMap[groupName] = groupId
@@ -745,12 +826,12 @@ func (h *Handler) MigrateUser() {
 			SystemRoles: []string{SystemUser},
 			OrgRoles:    []string{OrgUser},
 		}
-		jmsUser.SetPassword("jumpserver123")
+		jmsUser.SetPassword(h.config.Jumpserver.DefaultPassword)
 		if userId == "" {
 			userId = uuid.New().String()
 			jmsUser.ID = userId
 			if err = h.jmsClient.CreateUser(jmsUser); err != nil {
-				log.Printf("[ERROR] [用户: %s(%s)] 创建失败：%v\n", user.Name, user.Username, err)
+				h.AddError(C_User, fmt.Sprintf("'%s(%s)' 创建失败: %v", user.Name, user.Username, err))
 				continue
 			} else {
 				log.Printf("[INFO] [用户: %s(%s)] 创建成功\n", user.Name, user.Username)
@@ -763,7 +844,7 @@ func (h *Handler) MigrateUser() {
 			if err = h.jmsClient.InviteUser(map[string][]string{
 				"users": {userId}, "org_roles": {OrgUser},
 			}); err != nil {
-				log.Printf("[ERROR] [用户: %s(%s)] 邀请失败：%v\n", user.Name, user.Username, err)
+				h.AddError(C_User, fmt.Sprintf("'%s(%s)' 邀请失败: %v", user.Name, user.Username, err))
 				continue
 			} else {
 				log.Printf("[INFO] [用户: %s(%s)] 邀请成功\n", user.Name, user.Username)
@@ -772,7 +853,7 @@ func (h *Handler) MigrateUser() {
 			}
 		} else {
 			if err = h.jmsClient.UpdateUser(orgUserId, jmsUser); err != nil {
-				log.Printf("[ERROR] [用户: %s(%s)] 更新失败：%v\n", user.Name, user.Username, err)
+				h.AddError(C_User, fmt.Sprintf("'%s(%s)' 更新失败: %v", user.Name, user.Username, err))
 				continue
 			} else {
 				log.Printf("[INFO] [用户: %s(%s)] 更新成功\n", user.Name, user.Username)
@@ -787,14 +868,14 @@ func (h *Handler) MigrateUser() {
 		}
 		if aclId == "" {
 			if err = h.jmsClient.CreateLoginACL(loginAcl); err != nil {
-				log.Printf("[ERROR] [ACL: %s] 创建失败: %v\n", user.Name, err)
+				h.AddError(C_User, fmt.Sprintf("'%s' 的 ACL 创建失败: %v", user.Name, err))
 			} else {
 				h.loginAclMap[user.Username] = aclId
 				log.Printf("[INFO] [ACL: %s] 创建成功\n", user.Name)
 			}
 		} else {
 			if err = h.jmsClient.UpdateLoginACL(aclId, loginAcl); err != nil {
-				log.Printf("[ERROR] [ACL: %s] 更新失败: %v", user.Name, err)
+				h.AddError(C_User, fmt.Sprintf("'%s' 的 ACL 更新失败: %v", user.Name, err))
 			} else {
 				log.Printf("[INFO] [ACL: %s] 更新成功\n", user.Name)
 			}
@@ -841,7 +922,7 @@ func (h *Handler) MigrateUserGroup() {
 		return
 	}
 	log.Println("[INFO] 开始迁移用户组数据...")
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("[ERROR] 读取用户组 Excel 失败：%v", err)
 	}
@@ -864,7 +945,7 @@ func (h *Handler) MigrateUserGroup() {
 			user = strings.ReplaceAll(user, " ", "")
 			userId := h.userMap[user]
 			if userId == "" {
-				log.Printf("[INFO] 用户 %s 在 JumpServer 不存在，跳过\n", user)
+				h.AddError(C_UserGroup, fmt.Sprintf("用户 '%s' 在 JumpServer 不存在，跳过", user))
 				continue
 			}
 			group.Users = append(group.Users, userId)
@@ -873,14 +954,14 @@ func (h *Handler) MigrateUserGroup() {
 		if groupId == "" {
 			group.ID = uuid.New().String()
 			if err = h.jmsClient.CreateUserGroup(group); err != nil {
-				log.Printf("[ERROR] [用户组: %s] 创建失败: %v\n", group.Name, err)
+				h.AddError(C_UserGroup, fmt.Sprintf("'%s' 创建失败: %v", group.Name, err))
 			} else {
 				h.groupMap[group.Name] = group.ID
 				log.Printf("[INFO] [用户组: %s] 创建成功\n", group.Name)
 			}
 		} else {
 			if err = h.jmsClient.UpdateUserGroup(groupId, group); err != nil {
-				log.Printf("[ERROR] [用户组: %s] 更新失败: %v\n", group.Name, err)
+				h.AddError(C_UserGroup, fmt.Sprintf("'%s' 更新失败: %v", group.Name, err))
 			} else {
 				log.Printf("[INFO] [用户组: %s] 更新成功\n", group.Name)
 			}
@@ -894,11 +975,12 @@ type Protocol struct {
 }
 
 type EAsset struct {
-	Name      string     `json:"name" excel:"资产名称"`
-	Address   string     `json:"address" excel:"IP"`
-	Platform  string     `json:"platform" excel:"类型"`
-	Protocols []Protocol `json:"protocols" excel:"协议"`
-	Node      string     `json:"node" excel:"节点"`
+	Name      string     `json:"name"`
+	Address   string     `json:"address"`
+	Platform  string     `json:"platform"`
+	Protocols []Protocol `json:"protocols"`
+	Node      string     `json:"node"`
+	Comment   string     `json:"comment"`
 }
 
 func (i *EAsset) FitProtocols(protocolStr string) {
@@ -973,27 +1055,40 @@ func (h *Handler) MigrateAsset() {
 	}
 	log.Println("[INFO] 开始迁移资产数据...")
 
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("[ERROR] 读取资产 Excel 失败：%v", err)
 	}
-
-	headers := []string{"资产名称", "IP", "类型", "协议", "节点"}
+	headers := []string{"设备名称", "设备IP", "设备类型", "设备协议", "部门", "备注"}
 	h.checkHeaders(headers, rows[config.HeaderRowNum])
+
+	webRows, err := readExcelFile(config.Path, config.HeaderRowNum, 1)
+	if err != nil {
+		log.Fatalf("[ERROR] 读取 Web 资产 Excel 失败：%v", err)
+	}
+	webHeaders := []string{"设备名称", "首页/资产地址", "部门", "备注"}
+	h.checkHeaders(webHeaders, webRows[config.HeaderRowNum])
+
+	for _, row := range webRows[config.HeaderRowNum+1:] {
+		row = h.getValidRow(row, len(webHeaders))
+		tranRow := []string{row[0], row[1], "website", "{http:80}", row[2], row[3]}
+		rows = append(rows, tranRow)
+	}
 
 	h.getAssetFromRemote()
 	h.getPlatformFromRemote()
 
 	for _, row := range rows[config.HeaderRowNum+1:] {
+		row = h.getValidRow(row, len(headers))
 		asset := EAsset{
-			Name: row[0], Address: row[1], Node: row[4],
+			Name: row[0], Address: row[1], Node: row[4], Comment: row[5],
 		}
 		asset.FitProtocols(row[3])
 		asset.FitPlatform(row[2])
 
 		platformObj, exist := h.platformMap[asset.Platform]
 		if !exist {
-			log.Printf("[WARNING] 资产平台 %s 不存在，资产 %s 跳过创建\n", asset.Platform, asset.Name)
+			h.AddError(C_Asset, fmt.Sprintf("资产平台 '%s' 不存在，'%s' 跳过创建", asset.Platform, asset.Name))
 			continue
 		}
 
@@ -1006,18 +1101,25 @@ func (h *Handler) MigrateAsset() {
 			Protocols:    asset.Protocols,
 			Platform:     Platform{ID: platformId},
 			NodesDisplay: []string{asset.Node},
+			Comment:      asset.Comment,
+		}
+		if category == "webs" {
+			jmsAsset.Accounts = []JmsAccount{
+				{Name: "null", Username: "null", SecretType: "password"},
+			}
+			jmsAsset.AutoFill = "no"
 		}
 		if assetId == "" {
 			jmsAsset.ID = uuid.New().String()
 			if err = h.jmsClient.CreateAsset(category, jmsAsset); err != nil {
-				log.Printf("[ERROR] [资产: %s] 创建失败: %v\n", asset.Name, err)
+				h.AddError(C_Asset, fmt.Sprintf("'%s' 创建失败: %v", asset.Name, err))
 			} else {
 				log.Printf("[INFO] [资产: %s] 创建成功\n", asset.Name)
 				h.assetMap[asset.Name] = jmsAsset.ID
 			}
 		} else {
 			if err = h.jmsClient.UpdateAsset(assetId, category, jmsAsset); err != nil {
-				log.Printf("[ERROR] [资产: %s]更新失败: %v\n", asset.Name, err)
+				h.AddError(C_Asset, fmt.Sprintf("'%s' 更新失败: %v", asset.Name, err))
 			} else {
 				log.Printf("[INFO] [资产: %s] 更新成功\n", asset.Name)
 			}
@@ -1032,7 +1134,8 @@ func (h *Handler) getAccountFromRemote() {
 			log.Fatalf("[ERROR] 获取账号数据失败: %v", err)
 		}
 		for _, account := range accounts {
-			key := fmt.Sprintf("%s-%s-%s", account.Asset.Name, account.Asset.Address, account.Username)
+			username := strings.ToLower(account.Username)
+			key := fmt.Sprintf("%s-%s-%s", account.Asset.Name, account.Asset.Address, username)
 			h.accountMap[key] = account.Asset.ID
 		}
 		h.getAccounts = true
@@ -1045,6 +1148,7 @@ type JmsAccount struct {
 	Asset      string `json:"asset"`
 	SecretType string `json:"secret_type"`
 	Secret     string `json:"secret"`
+	Comment    string `json:"comment"`
 }
 
 func (h *Handler) MigrateAccount() {
@@ -1053,46 +1157,53 @@ func (h *Handler) MigrateAccount() {
 		return
 	}
 	log.Println("[INFO] 开始迁移资产账号数据...")
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("[ERROR] 读取账号 Excel 失败：%v", err)
 	}
 
-	headers := []string{"设备名称", "设备IP", "账号、特权命令", "密码"}
+	headers := []string{"设备名称", "设备IP", "备注", "账号、特权命令", "密码"}
 	h.checkHeaders(headers, rows[config.HeaderRowNum])
 
 	h.getAssetFromRemote()
 	h.getAccountFromRemote()
 
 	for _, row := range rows[config.HeaderRowNum+1:] {
-		// assetName, assetAddress, department, comment, Username, Secret
-		if row[0] == "" || row[1] == "" || row[4] == "" {
-			log.Printf("[WARNING] 数据不完整，跳过: %s", strings.Join(row, ", "))
+		// assetName, assetAddress, comment, Username, Secret
+		if row[0] == "" || row[1] == "" {
+			h.AddError(C_Account, fmt.Sprintf("数据不完整，跳过: %s", strings.Join(row, ", ")))
 			continue
 		}
-		assetId := h.accountMap[fmt.Sprintf("%s-%s-%s", row[0], row[1], row[4])]
+		row = h.getValidRow(row, len(headers))
+		username := strings.ToLower(row[3])
+		username = strings.TrimPrefix(row[3], ".\\")
+		username = strings.ReplaceAll(username, "\\", "@")
+		if username == "" {
+			username = "null"
+		}
+
+		assetId := h.accountMap[fmt.Sprintf("%s-%s-%s", row[0], row[1], username)]
 		if assetId != "" {
-			log.Printf("[WARNING] 资产 %s 账号 %s 已经存在，跳过", row[0], row[4])
 			continue
 		}
 		assetId = h.assetMap[row[0]]
 		if assetId == "" {
-			log.Printf("[WARNING] 资产 %s 未找到，账号 %s 跳过创建", row[0], row[4])
+			h.AddError(C_Account, fmt.Sprintf("资产 '%s' 未找到，'%s' 跳过创建", row[0], row[3]))
 			continue
 		}
 		secret := ""
-		if len(row) >= 6 {
-			secret = row[5]
+		if len(row) >= 5 {
+			secret = row[4]
 		}
 		jmsAccount := JmsAccount{
-			Name: row[4], Username: row[4],
+			Name: username, Username: username, Comment: row[2],
 			Asset: assetId, SecretType: "password", Secret: secret,
 		}
 		if err = h.jmsClient.CreateAccount(jmsAccount); err != nil {
-			log.Printf("[ERROR] [账号: %s] 创建失败: %v", jmsAccount.Name, err)
+			h.AddError(C_Account, fmt.Sprintf("'%s' 创建失败: %v", jmsAccount.Name, err))
 		} else {
 			log.Printf("[INFO] [账号: %s] 创建成功", jmsAccount.Name)
-			h.accountMap[fmt.Sprintf("%s-%s-%s", row[0], row[1], row[2])] = assetId
+			h.accountMap[fmt.Sprintf("%s-%s-%s", row[0], row[1], username)] = assetId
 		}
 	}
 
@@ -1117,7 +1228,7 @@ func (h *Handler) MigrateNode() {
 		return
 	}
 	log.Println("[INFO] 开始迁移节点数据...")
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("[ERROR] 读取节点 Excel 失败：%v", err)
 	}
@@ -1126,6 +1237,7 @@ func (h *Handler) MigrateNode() {
 	h.getNodeFromRemote()
 
 	for i, name := range rows[config.HeaderRowNum] {
+		name = strings.TrimSpace(name)
 		nodeId := h.nodeMap[name]
 		jmsNode := Node{
 			Value: name,
@@ -1134,7 +1246,7 @@ func (h *Handler) MigrateNode() {
 			nodeId = uuid.New().String()
 			jmsNode.ID = nodeId
 			if err = h.jmsClient.CreateNode(jmsNode); err != nil {
-				log.Printf("[Error] [节点: %s] 创建失败\n", name)
+				h.AddError(C_Node, fmt.Sprintf("'%s' 创建失败: %v", name, err))
 				continue
 			} else {
 				h.nodeMap[name] = nodeId
@@ -1146,7 +1258,7 @@ func (h *Handler) MigrateNode() {
 		for _, asset := range assets {
 			assetId := h.assetMap[asset]
 			if assetId == "" {
-				log.Printf("[WARNING] 资产 %s 不存在 JumpServer 中，请创建后重试\n", asset)
+				h.AddError(C_Node, fmt.Sprintf("资产 '%s' 不存在 JumpServer 中，无法绑定节点 '%s'，请创建后重试", asset, name))
 				continue
 			}
 			assetIds = append(assetIds, assetId)
@@ -1156,7 +1268,7 @@ func (h *Handler) MigrateNode() {
 		}
 
 		if err = h.jmsClient.NodeAddAssets(nodeId, assetIds); err != nil {
-			log.Printf("[ERROR] 节点资产关联失败: %v\n", err)
+			h.AddError(C_Node, fmt.Sprintf("节点资产关联失败: %v", err))
 		} else {
 			log.Printf("[INFO] 共 %v 个资产和节点 %s 关联", len(assetIds), name)
 		}
@@ -1182,7 +1294,7 @@ func (h *Handler) MigratePermission() {
 		return
 	}
 	log.Println("[INFO] 开始迁移授权数据...")
-	rows, err := readExcelFile(config.Path, config.HeaderRowNum)
+	rows, err := readExcelFile(config.Path, config.HeaderRowNum, 0)
 	if err != nil {
 		log.Fatalf("[ERROR] 读取授权 Excel 失败：%v", err)
 	}
@@ -1197,21 +1309,22 @@ func (h *Handler) MigratePermission() {
 	var permissionsMap = make(map[string]Permission)
 	// username, asset_name, asset_category, asset_ip, support_protocols, account, account_protocols, db_name
 	for _, row := range rows[config.HeaderRowNum+1:] {
+		row = h.getValidRow(row, len(headers))
 		name := fmt.Sprintf("%s-%s", row[1], row[0])
 		userId := h.usernameMap[row[0]]
 		if userId == "" {
-			log.Printf("[WARNING] 用户 %s 在 JumpServer 不存在，跳过\n", row[0])
+			h.AddError(C_Perm, fmt.Sprintf("用户 '%s' 在 JumpServer 不存在，跳过授权", row[0]))
 			continue
 		}
 		assetId := h.assetMap[row[1]]
 		if assetId == "" {
-			log.Printf("[WARNING] 资产 %s 在 JumpServer 不存在，跳过\n", row[1])
+			h.AddError(C_Perm, fmt.Sprintf("资产 '%s' 在 JumpServer 不存在，跳过授权", row[1]))
 			continue
 		}
 		perm, exists := permissionsMap[name]
 		if exists {
 			perm.mergeAccounts(row[5])
-			perm.mergeProtocols(row[6])
+			perm.mergeProtocols(row[6], h.supportProtocols)
 			permissionsMap[name] = perm
 		} else {
 			jmsPerm := Permission{
@@ -1227,7 +1340,7 @@ func (h *Handler) MigratePermission() {
 			}
 			for _, p := range strings.Split(row[6], ",") {
 				p = strings.ToLower(p)
-				if p == "ftp" || p == "scp" {
+				if _, exists = h.supportProtocols[p]; !exists {
 					continue
 				}
 				jmsPerm.Protocols = append(jmsPerm.Protocols, p)
@@ -1241,13 +1354,13 @@ func (h *Handler) MigratePermission() {
 		if permId != "" {
 			perm.ID = ""
 			if err = h.jmsClient.UpdatePerm(permId, perm); err != nil {
-				log.Printf("[ERROR] [资产授权: %s] 更新失败: %v", perm.Name, err)
+				h.AddError(C_Perm, fmt.Sprintf("'%s' 更新失败: %v", perm.Name, err))
 			} else {
 				log.Printf("[INFO] [资产授权: %s] 更新成功", perm.Name)
 			}
 		} else {
 			if err = h.jmsClient.CreatePerm(perm); err != nil {
-				log.Printf("[ERROR] [资产授权: %s] 创建失败: %v", perm.Name, err)
+				h.AddError(C_Perm, fmt.Sprintf("'%s' 创建失败: %v", perm.Name, err))
 			} else {
 				log.Printf("[INFO] [资产授权: %s] 创建成功", perm.Name)
 			}
@@ -1255,13 +1368,54 @@ func (h *Handler) MigratePermission() {
 	}
 }
 
+func (h *Handler) PrintErrorSummary() {
+	if len(h.errorMsgBucket) == 0 {
+		fmt.Println("✅ 没有错误信息")
+		return
+	}
+	summaryLines := []string{
+		"❌ 错误摘要",
+		"----------------------------------------",
+	}
+	for category, errors := range h.errorMsgBucket {
+		summaryLines = append(summaryLines, fmt.Sprintf("\n【%s】(%d个错误)", category, len(errors)))
+		for i, errMsg := range errors {
+			summaryLines = append(summaryLines, fmt.Sprintf("  %d. %s", i+1, errMsg))
+		}
+	}
+
+	summaryLines = append(summaryLines, "\n----------------------------------------")
+	totalErrors := 0
+	for _, errors := range h.errorMsgBucket {
+		totalErrors += len(errors)
+	}
+	summaryLines = append(summaryLines, fmt.Sprintf("总计: %d 个错误", totalErrors))
+	for _, line := range summaryLines {
+		fmt.Println(line)
+	}
+
+	errorFilePath := filepath.Join(".", "error_summary.txt")
+	file, err := os.OpenFile(errorFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	_, err = file.WriteString(strings.Join(summaryLines, "\n"))
+	if err != nil {
+		return
+	}
+	fmt.Printf("错误摘要信息已同步保存到文件 %s 中\n", errorFilePath)
+}
+
 func (h *Handler) Do() {
+	h.InitResources()
 	h.MigrateUser()
 	h.MigrateUserGroup()
 	h.MigrateAsset()
 	h.MigrateAccount()
 	h.MigrateNode()
 	h.MigratePermission()
+	h.PrintErrorSummary()
 }
 
 type PathConfig struct {
@@ -1270,9 +1424,11 @@ type PathConfig struct {
 }
 
 type JmsConfig struct {
-	Endpoint string `mapstructure:"Endpoint"`
-	Token    string `mapstructure:"Token"`
-	OrgId    string `mapstructure:"OrgId"`
+	Endpoint                 string `mapstructure:"Endpoint"`
+	Token                    string `mapstructure:"Token"`
+	OrgId                    string `mapstructure:"OrgId"`
+	DefaultPassword          string `mapstructure:"DefaultPassword"`
+	ACLLoginDenyIncludeAdmin bool   `mapstructure:"ACLLoginDenyIncludeAdmin"`
 }
 
 type Config struct {
@@ -1317,7 +1473,6 @@ func main() {
 	conf.Account.HeaderRowNum--
 	conf.Node.HeaderRowNum--
 	conf.Permission.HeaderRowNum--
-
 	handler := &Handler{
 		config:      conf,
 		jmsClient:   newJumpServer(conf.Jumpserver),
@@ -1330,8 +1485,11 @@ func main() {
 		nodeMap:     make(map[string]string),
 		permMap:     make(map[string]string),
 		platformMap: make(map[string]map[string]string),
+
+		errorMsgBucket:   make(map[string][]string),
+		errorMsgCache:    make(map[string]bool),
+		supportProtocols: make(map[string]bool),
 	}
 	handler.Do()
-
 	log.Println("所有迁移任务执行完毕")
 }

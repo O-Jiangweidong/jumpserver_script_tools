@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -91,7 +92,11 @@ func (jms *JumpServer) doRequest(method, url string, body interface{}) (*http.Re
 		req.Header.Set(key, value)
 	}
 
-	jms.client = &http.Client{}
+	jms.client = &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		}},
+	}
 	return jms.client.Do(req)
 }
 

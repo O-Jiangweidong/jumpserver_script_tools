@@ -546,11 +546,19 @@ func (p *Permission) mergeAccounts(accountName string) {
 func (p *Permission) mergeProtocols(value string, protocolsMap map[string]bool) {
 	set := make(map[string]struct{})
 	for _, p1 := range p.Protocols {
-		set[strings.ToLower(p1)] = struct{}{}
+		p1 = strings.ToLower(p1)
+		if p1 == "https" {
+			p1 = "http"
+		}
+		set[p1] = struct{}{}
 	}
 
 	for _, p2 := range strings.Split(value, ",") {
-		set[strings.ToLower(p2)] = struct{}{}
+		p2 = strings.ToLower(p2)
+		if p2 == "https" {
+			p2 = "http"
+		}
+		set[p2] = struct{}{}
 	}
 	result := make([]string, 0, len(set))
 	for item := range set {
@@ -558,6 +566,9 @@ func (p *Permission) mergeProtocols(value string, protocolsMap map[string]bool) 
 			continue
 		}
 		result = append(result, item)
+	}
+	if len(result) == 0 {
+		result = append(result, "all")
 	}
 	p.Protocols = result
 }
@@ -1343,13 +1354,7 @@ func (h *Handler) MigratePermission() {
 					"connect", "upload", "download", "copy", "paste", "delete", "share",
 				},
 			}
-			for _, p := range strings.Split(row[6], ",") {
-				p = strings.ToLower(p)
-				if _, exists = h.supportProtocols[p]; !exists {
-					continue
-				}
-				jmsPerm.Protocols = append(jmsPerm.Protocols, p)
-			}
+			jmsPerm.mergeProtocols(row[6], h.supportProtocols)
 			permissionsMap[name] = jmsPerm
 		}
 
